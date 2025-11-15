@@ -203,7 +203,6 @@
     <div class="btn-row">
       <button id="prevBtn" class="round-btn" title="Previous">&lt;</button>
       <button id="startBtn" class="link-btn">Start</button>
-      <button id="redoBtn" class="link-btn">Redo</button>
       <button id="nextBtn" class="round-btn" title="Next">&gt;</button>
     </div>
   </div>
@@ -227,7 +226,6 @@ let sentenceWrap  = document.getElementById('sentenceWrap');
 const prevBtn=document.getElementById('prevBtn');
 const nextBtn=document.getElementById('nextBtn');
 const startBtn=document.getElementById('startBtn');
-const redoBtn=document.getElementById('redoBtn');
 
 // icons
 const iconRecord = document.getElementById('iconRecord');
@@ -321,6 +319,8 @@ function renderLessonList(){
       renderLessonList();
       renderPageFromState();
       updateButtons();
+document.querySelector('.controls').style.display = 'flex';
+
     };
 
     lessonListEl.appendChild(item);
@@ -507,6 +507,8 @@ function renderPageFromState(){
   } catch (e) {
     console.error('[renderPageFromState]', e);
   }
+document.querySelector('.controls').style.display = 'flex';
+
 }
 
 
@@ -541,6 +543,9 @@ function showRecordingUI(mode){
       iconDone.style.display = 'block';
       startBtn.textContent = 'Start';
       isRunning = false;
+      startBtn.disabled = false;
+      prevBtn.disabled = (pageIdx === 0);
+      nextBtn.disabled = false;
       setTimeout(()=>showRecordingUI('idle'),1500);
       break;
     default: // idle
@@ -566,6 +571,9 @@ startBtn.onclick = async () => {
       mediaRecorder.ondataavailable = e => {
         audioChunks.push(e.data);
       };
+startBtn.disabled = true;
+nextBtn.disabled = true;
+prevBtn.disabled = true;
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
@@ -586,18 +594,6 @@ startBtn.onclick = async () => {
   }
 };
 
-redoBtn.onclick=()=>{
-  stopRecording();
-  wordSpanIdx.forEach(i=>spans[i].classList.remove('correct','skipped'));
-  currentIndex=0;
-  correctCount=0;
-  pausedBetween=false;
-  translationEl.textContent='';
-  setProgress(0);
-  saveState(false);
-  showRecordingUI('idle');
-  updateButtons();
-};
 
 prevBtn.onclick=()=>{
   if(pageIdx>0){
@@ -665,16 +661,22 @@ async function sendToWhisper(audioBlob){
     const tokens = spoken.split(/\W+/).filter(Boolean);
     const set = new Set(tokens);
 
-    for (let i = 0; i < words.length; i++){
-      const span = spans[wordSpanIdx[i]];
-      if (!span || span.classList.contains('correct')) continue;
+for (let i = 0; i < words.length; i++){
+  const span = spans[wordSpanIdx[i]];
 
-      const tgt = words[i].toLowerCase();
-      const variants = (wordVariants[tgt] || [tgt]);
-      if (variants.some(v => set.has(v.toLowerCase()))){
-        span.classList.add('correct');
-      }
-    }
+  // 已經讀對的字跳過
+  if (!span || span.classList.contains('correct')) continue;
+
+  const tgt = words[i].toLowerCase();
+  const variants = (wordVariants[tgt] || [tgt]);
+
+  // 如果 transcript tokens 裡面有任何 variant，即算讀對
+  const matched = variants.some(v => set.has(v.toLowerCase()));
+
+  if (matched) {
+    span.classList.add('correct');
+  }
+}
 
     saveState(isPageDone());
     const st = pageStates[pageIdx];
