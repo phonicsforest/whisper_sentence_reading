@@ -308,6 +308,9 @@ const pageStates=[];
 let mediaRecorder = null;
 let audioChunks = [];
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
+const AUDIO_PATH = 'audio/';   // 特別字 mp3 放嘅資料夾
+let currentAudio = null;       // 用嚟記住而家播緊邊個 audio
+
 
 /* ========== helpers ========== */
 function getPagesFromLessons(idx){
@@ -836,9 +839,37 @@ function showSummary(){
 }
 
 function speakWord(w){
-  const u=new SpeechSynthesisUtterance(w);
-  u.lang='en-GB';
-  speechSynthesis.speak(u);
+  // 1. 準備檔名：全部轉細階，移除非英數字元（例如 ' / , . 等）
+  const cleanKey = w.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const src = AUDIO_PATH + cleanKey + '.mp3';
+
+  // 2. 如果之前有 audio 播緊，先停咗佢
+  if (currentAudio){
+    try{
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }catch(e){}
+  }
+
+  // 3. 建立新 audio 播放
+  const audio = new Audio(src);
+  currentAudio = audio;
+
+  // 4. 如果 mp3 播放失敗（例如檔案唔存在），fallback 用舊有 TTS
+  audio.onerror = () => {
+    console.warn('Audio not found for special word:', src, 'fallback to TTS');
+    const u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-GB';
+    speechSynthesis.speak(u);
+  };
+
+  audio.play().catch(err => {
+    console.error('Audio play error:', err);
+    // 播唔到都可以 fallback
+    const u = new SpeechSynthesisUtterance(w);
+    u.lang = 'en-GB';
+    speechSynthesis.speak(u);
+  });
 }
 
 /* ---------- 初始化 ---------- */
