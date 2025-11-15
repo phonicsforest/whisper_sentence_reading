@@ -39,6 +39,16 @@
     flex-direction:row;
     gap:10px;
     align-items:center;
+    position:relative;          /* 為 page-counter 定位用 */
+  }
+
+  /* 右下角句子進度 (第幾句/共幾句) */
+  .page-counter{
+    position:absolute;
+    right:10px;
+    bottom:8px;
+    font-size:12px;
+    color:#666;
   }
 
   .imgBox{height:100%;aspect-ratio:1/1;overflow:hidden;display:flex;align-items:center;justify-content:center}
@@ -120,7 +130,7 @@
     justify-content:center;
     gap:6px;
     margin-top:-4px;
-    min-height:80px;        /* 固定高度，避免上面圖片句子被推上推落 */
+    min-height:80px;        /* 固定高度，避免上面 panel 被推上推落 */
   }
   .btn-row{
     display:flex;
@@ -153,19 +163,19 @@
   }
 
   /* 錄音指示器 icons */
-.record-indicator{
-  height:40px;                 /* 固定高度，icon 出現/消失唔會推郁上面 */
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transform:translateY(-30px); /* 整組升高啲，介乎 panel 同按鈕之間 */
-}
+  .record-indicator{
+    height:40px;                 /* 固定高度，icon 出現/消失唔會推郁上面 */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform:translateY(-30px); /* 整組升高啲，介乎 panel 同按鈕之間 */
+  }
 
-.rec-icon{
-  width:22px;
-  height:22px;
-  display:none;                /* 只顯示一個，其餘唔佔位 */
-}
+  .rec-icon{
+    width:22px;
+    height:22px;
+    display:none;                /* 只顯示一個，其餘不佔位 */
+  }
 
   /* 🔴 錄音中：中間實心紅點 + 外圍紅圈 (22x22) */
   .rec-record{
@@ -239,6 +249,7 @@
         <div id="sentenceWrap"><div id="sentence"></div></div>
         <div id="translation"></div>
       </div>
+      <div id="pageCounter" class="page-counter"></div>
     </div>
   </div>
 
@@ -272,6 +283,7 @@ let ctx       = pixCanvas.getContext('2d',{willReadFrequently:true});
 let sentenceDiv   = document.getElementById('sentence');
 let translationEl = document.getElementById('translation');
 let sentenceWrap  = document.getElementById('sentenceWrap');
+let pageCounterEl = document.getElementById('pageCounter');
 
 const prevBtn  = document.getElementById('prevBtn');
 const nextBtn  = document.getElementById('nextBtn');
@@ -353,12 +365,14 @@ function renderLessonList(){
           <div class="textCol">
             <div id="sentenceWrap"><div id="sentence"></div></div>
             <div id="translation"></div>
-          </div>`;
+          </div>
+          <div id="pageCounter" class="page-counter"></div>`;
         pixCanvas    = document.getElementById('pixCanvas');
         ctx          = pixCanvas.getContext('2d',{willReadFrequently:true});
         sentenceDiv  = document.getElementById('sentence');
         translationEl= document.getElementById('translation');
         sentenceWrap = document.getElementById('sentenceWrap');
+        pageCounterEl= document.getElementById('pageCounter');
       }
 
       document.querySelector('.controls').style.display = 'flex';
@@ -403,6 +417,7 @@ function renderPageFromState(){
     if (!pages || !pages.length){
       sentenceDiv.textContent = '';
       translationEl.textContent = '';
+      if (pageCounterEl) pageCounterEl.textContent = '';
       return;
     }
 
@@ -550,6 +565,15 @@ function renderPageFromState(){
       translationEl.textContent = '';
     }
 
+    // 更新句子計數  (例如 2/5)
+    if (pageCounterEl){
+      if (pages && pages.length){
+        pageCounterEl.textContent = (pageIdx + 1) + '/' + pages.length;
+      }else{
+        pageCounterEl.textContent = '';
+      }
+    }
+
     autoFitTwoLines();
     updateButtons();
 
@@ -593,7 +617,7 @@ function showRecordingUI(mode){
     iconDone.style.display = 'block';
     startBtn.textContent = 'START';
 
-    // ✅ 綠 tick 出現後 1.5 秒，先再 enable 所有按鈕
+    // 綠 tick 出現後 1.5 秒，先再 enable 所有按鈕
     startBtn.disabled = true;
     prevBtn.disabled  = true;
     nextBtn.disabled  = true;
@@ -607,7 +631,7 @@ function showRecordingUI(mode){
 
       startBtn.textContent = 'START';
       startBtn.disabled = false;
-      updateButtons();                 // 由 pageIdx 決定 PREVIOUS / NEXT 是否可按
+      updateButtons();                 // 用 pageIdx 決定 PREVIOUS / NEXT 是否可按
     }, 1500);
 
   } else { // idle
@@ -621,7 +645,14 @@ function showRecordingUI(mode){
 
 function updateButtons(){
   const busy = (uiMode === 'recording' || uiMode === 'analyzing' || uiMode === 'done');
-  // Prev / Next 在錄音 / 分析 / done 時都先禁用（done 會喺 1.5 秒後放返）
+
+  // NEXT / FINISH 文案
+  if (pages && pages.length && pageIdx === pages.length - 1){
+    nextBtn.textContent = 'FINISH';
+  } else {
+    nextBtn.textContent = 'NEXT';
+  }
+
   if (!busy){
     prevBtn.disabled = (pageIdx === 0);
     nextBtn.disabled = false;
