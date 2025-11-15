@@ -153,18 +153,24 @@
   }
 
   /* 錄音指示器 icons */
-  .record-indicator{
-    height:30px;            /* 固定高度，icon 出現/消失唔會改高度 */
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transform:translateY(-4px); /* 全組稍為升高少少 */
-  }
-  .rec-icon{
-    width:22px;
-    height:22px;
-    visibility:hidden;      /* 永遠佔位，只係隱藏顯示 */
-  }
+.record-indicator{
+  height:30px;                 /* 固定高度，唔推郁上面 panel */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;           /* 俾入面 icon 絕對定位用 */
+  transform:translateY(-16px); /* 整組升高啲，你可以之後微調 -12 / -18 */
+}
+
+.rec-icon{
+  width:22px;
+  height:22px;
+  visibility:hidden;           /* 用 visibility 先，唔會改高度 */
+  position:absolute;           /* 疊喺同一點 */
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+}
 
   /* 🔴 錄音中：中間實心紅點 + 外圍紅圈 (22x22) */
   .rec-record{
