@@ -154,22 +154,17 @@
 
   /* 錄音指示器 icons */
 .record-indicator{
-  height:30px;                 /* 固定高度，唔推郁上面 panel */
+  height:40px;                 /* 固定高度，icon 出現/消失唔會推郁上面 */
   display:flex;
   align-items:center;
   justify-content:center;
-  position:relative;           /* 俾入面 icon 絕對定位用 */
-  transform:translateY(-16px); /* 整組升高啲，你可以之後微調 -12 / -18 */
+  transform:translateY(-16px); /* 整組升高啲，介乎 panel 同按鈕之間 */
 }
 
 .rec-icon{
   width:22px;
   height:22px;
-  visibility:hidden;           /* 用 visibility 先，唔會改高度 */
-  position:absolute;           /* 疊喺同一點 */
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%);
+  display:none;                /* 只顯示一個，其餘唔佔位 */
 }
 
   /* 🔴 錄音中：中間實心紅點 + 外圍紅圈 (22x22) */
@@ -576,42 +571,43 @@ function saveState(finished=false){
 /* ---------- UI 狀態 (icon + 按鈕) ---------- */
 function showRecordingUI(mode){
   uiMode = mode;
-  // icon 用 visibility，唔用 display，避免高度變
-  iconRecord.style.visibility = 'hidden';
-  iconSpin.style.visibility   = 'hidden';
-  iconDone.style.visibility   = 'hidden';
+
+  // 只顯示一個 icon，其餘 display:none
+  iconRecord.style.display = 'none';
+  iconSpin.style.display   = 'none';
+  iconDone.style.display   = 'none';
 
   if (mode === 'recording'){
-    iconRecord.style.visibility = 'visible';
+    iconRecord.style.display = 'block';
     startBtn.textContent = 'STOP';
     startBtn.disabled = false;
     isRunning = true;
+
   } else if (mode === 'analyzing'){
-    iconSpin.style.visibility = 'visible';
+    iconSpin.style.display = 'block';
     startBtn.textContent = 'STOP';
     startBtn.disabled = true;
     isRunning = false;
+
   } else if (mode === 'done'){
-    iconDone.style.visibility = 'visible';
+    iconDone.style.display = 'block';
     startBtn.textContent = 'START';
 
-    // ✅ 綠 tick 出現後，按鈕要等 1.5 秒先再 enable
+    // ✅ 綠 tick 出現後 1.5 秒，先再 enable 所有按鈕
     startBtn.disabled = true;
     prevBtn.disabled  = true;
     nextBtn.disabled  = true;
     isRunning = false;
 
     setTimeout(() => {
-      // 1.5 秒後先真正可以再按
-      uiMode = 'idle';
-      iconRecord.style.visibility = 'hidden';
-      iconSpin.style.visibility   = 'hidden';
-      iconDone.style.visibility   = 'hidden';
+      uiMode = 'idle';                 // 回到空閒狀態
+      iconRecord.style.display = 'none';
+      iconSpin.style.display   = 'none';
+      iconDone.style.display   = 'none';
 
       startBtn.textContent = 'START';
       startBtn.disabled = false;
-      prevBtn.disabled  = (pageIdx === 0);
-      nextBtn.disabled  = false;
+      updateButtons();                 // 由 pageIdx 決定 PREVIOUS / NEXT 是否可按
     }, 1500);
 
   } else { // idle
