@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Read — Lessons, Recording UI, Punctuation, Prev/Redo/Skip/Next</title>
+<title>Read — Lessons, Recording UI, Punctuation, Prev/Redo/Next</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -95,17 +95,61 @@
 .link-btn{background:none;border:none;color:#111;cursor:pointer;font-size:16px;padding:6px 10px;margin:0 6px;display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:40px}
 .link-btn:disabled{opacity:.4;cursor:not-allowed}
 
-.controls{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:-4px}
+/* 控制區改為上下排列：上面錄音指示，下面一行按鈕 */
+.controls{
+  grid-column:2;
+  grid-row:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:-4px;
+}
+.btn-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+/* 簡單錄音指示器 */
+.record-indicator{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+}
+.rec-circle{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  margin-bottom:4px;
+  visibility:hidden;
+}
+.rec-on{
+  visibility:visible;
+  background:#e53935;
+  box-shadow:0 0 0 4px rgba(229,57,53,.3);
+}
+.rec-analyzing{
+  visibility:visible;
+  background:#ffa000;
+}
+.rec-done{
+  visibility:visible;
+  background:#43a047;
+}
+.record-text{
+  font-size:12px;
+  color:#555;
+}
 
 .summary{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px;text-align:center}
 .summary h2{margin:6px 0 8px;font-size:28px}
 .summary .line{margin:4px 0;font-size:22px}
 .skipped{color:#c00;font-weight:700}
-
-.link-btn.rec{padding:0;width:40px;height:40px}
-.link-btn.rec .rec-dot{width:14px;height:14px;border-radius:50%;background:#e53935;position:relative; margin-left: 8px;}
-.link-btn.rec .rec-dot::after{content:"";position:absolute;inset:-8px;border:4px solid #e53935;border-radius:50%;animation:recPulse 1.6s ease-out infinite;opacity:.6}
-@keyframes recPulse{0%{transform:scale(.6);opacity:.6}70%{transform:scale(1);opacity:.1}100%{transform:scale(1);opacity:0}}
 </style>
 </head>
 <body>
@@ -129,11 +173,16 @@
   </div>
 
   <div class="controls">
-    <button id="prevBtn" class="round-btn" title="Previous">&lt;</button>
-    <button id="startBtn" class="link-btn">Start</button>
-    <button id="skipBtn" class="link-btn" disabled>Skip</button>
-    <button id="redoBtn" class="link-btn">Redo</button>
-    <button id="nextBtn" class="round-btn" title="Next">&gt;</button>
+    <div class="record-indicator">
+      <div id="recCircle" class="rec-circle"></div>
+      <div id="recStatus" class="record-text"></div>
+    </div>
+    <div class="btn-row">
+      <button id="prevBtn" class="round-btn" title="Previous">&lt;</button>
+      <button id="startBtn" class="link-btn">Start</button>
+      <button id="redoBtn" class="link-btn">Redo</button>
+      <button id="nextBtn" class="round-btn" title="Next">&gt;</button>
+    </div>
   </div>
 </div>
 
@@ -156,7 +205,9 @@ const prevBtn=document.getElementById('prevBtn');
 const nextBtn=document.getElementById('nextBtn');
 const startBtn=document.getElementById('startBtn');
 const redoBtn=document.getElementById('redoBtn');
-const skipBtn=document.getElementById('skipBtn');
+
+const recCircle = document.getElementById('recCircle');
+const recStatus = document.getElementById('recStatus');
 
 /* ---------- 狀態 ---------- */
 let currentLesson = 1;
@@ -167,7 +218,7 @@ let currentIndex=0,correctCount=0;
 let isRunning=false,pausedBetween=false,wentBackOnce=false;
 const pageStates=[];
 
-/* === Whisper / MediaRecorder 新增 === */
+/* Whisper / MediaRecorder */
 let mediaRecorder = null;
 let audioChunks = [];
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
@@ -237,7 +288,6 @@ function renderLessonList(){
         sentenceDiv  = document.getElementById('sentence');
         translationEl= document.getElementById('translation');
         sentenceWrap = document.getElementById('sentenceWrap');
-        document.querySelector('.controls').style.display = 'flex';
       }
 
       currentLesson = i;
@@ -323,7 +373,7 @@ function renderPageFromState(){
           const sep = tokens[j];
           const nxt = tokens[j+1];
           if ((sep === '|' || sep === '-' || sep === '*') && /^[A-Za-z']+$/.test(nxt || '')) {
-            parts.push({ text: nxt, before: (sep==='|'?'split': (sep==='-'?'hyphen':'asterisk')) });
+            parts.push({ text: nxt, before: (sep==='|'?'split': (sep==='hyphen'?'hyphen':'asterisk')) });
             j += 2;
           } else break;
         }
@@ -358,7 +408,6 @@ function renderPageFromState(){
         const lower = node.text.toLowerCase();
         if (Array.isArray(SPECIAL_WORDS) && SPECIAL_WORDS.includes(lower)) w.classList.add('special');
         if (st.correct.has(wordCounter)) w.classList.add('correct');
-        if (st.skipped.has(wordCounter)) w.classList.add('skipped');
 
         node.parts.forEach((part) => {
           if (part.before === 'split') {
@@ -425,7 +474,7 @@ function renderPageFromState(){
       setProgress(correctCount / Math.max(1, words.length));
       pausedBetween = false;
     }
-    currentIndex = st.finished ? words.length : Math.min(words.length, (st.correct.size + st.skipped.size));
+    currentIndex = correctCount;
 
     if (typeof autoFitTwoLines === 'function') autoFitTwoLines();
     if (typeof updateButtons === 'function') updateButtons();
@@ -438,13 +487,12 @@ function renderPageFromState(){
 
 /* ========== 狀態保存 / 控制 ========== */
 function saveState(finished=false){
-  const correct=new Set(), skipped=new Set();
+  const correct=new Set();
   for(let i=0;i<wordSpanIdx.length;i++){
     const sp=spans[wordSpanIdx[i]];
     if(sp.classList.contains('correct')) correct.add(i);
-    if(sp.classList.contains('skipped')) skipped.add(i);
   }
-  pageStates[pageIdx] = {correct, skipped, finished};
+  pageStates[pageIdx] = {correct, skipped:new Set(), finished};
 }
 
 function containsWholeWord(spoken,variants){
@@ -452,14 +500,44 @@ function containsWholeWord(spoken,variants){
   const set=new Set(tokens); return variants.some(v=>set.has(v.toLowerCase()));
 }
 
-/* === MediaRecorder + Whisper 控制 === */
+/* ---- 錄音狀態 UI ---- */
+function showRecordingUI(mode){
+  // mode: 'idle' | 'recording' | 'analyzing' | 'done'
+  recCircle.className = 'rec-circle';
+  switch(mode){
+    case 'recording':
+      recCircle.classList.add('rec-on');
+      recStatus.textContent = '錄音中...';
+      startBtn.textContent = 'Stop';
+      isRunning = true;
+      break;
+    case 'analyzing':
+      recCircle.classList.add('rec-analyzing');
+      recStatus.textContent = '分析中...';
+      startBtn.textContent = 'Start';
+      isRunning = false;
+      break;
+    case 'done':
+      recCircle.classList.add('rec-done');
+      recStatus.textContent = '已完成...';
+      startBtn.textContent = 'Start';
+      isRunning = false;
+      setTimeout(()=>showRecordingUI('idle'),1500);
+      break;
+    default:
+      recStatus.textContent = '';
+      startBtn.textContent = 'Start';
+      recCircle.style.visibility='hidden';
+      return;
+  }
+  recCircle.style.visibility='visible';
+}
+
+/* ---- MediaRecorder 控制 ---- */
 function stopRecording(){
   if (mediaRecorder && mediaRecorder.state === "recording"){
     mediaRecorder.stop();
   }
-  isRunning = false;
-  showRecordingUI(false);
-  updateButtons();
 }
 
 startBtn.onclick = async () => {
@@ -475,15 +553,13 @@ startBtn.onclick = async () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        // 停止所有 track
         stream.getTracks().forEach(t => t.stop());
+        showRecordingUI('analyzing');
         await sendToWhisper(audioBlob);
       };
 
       mediaRecorder.start();
-      isRunning = true;
-      pausedBetween = false;
-      showRecordingUI(true);
+      showRecordingUI('recording');
       updateButtons();
     } catch (err) {
       console.error("Mic error:", err);
@@ -491,23 +567,6 @@ startBtn.onclick = async () => {
     }
   } else {
     stopRecording();
-  }
-};
-
-skipBtn.onclick=()=>{
-  if (isPageDone()) return;
-  const idx = currentIndex;
-  if (idx < words.length){
-    spans[wordSpanIdx[idx]]?.classList.add('skipped');
-    currentIndex++;
-    saveState(false);
-    const st = pageStates[pageIdx];
-    const done = (st.correct.size || 0) + (st.skipped.size || 0);
-    setProgress(st.correct.size / Math.max(1, words.length));
-    if (done >= words.length) {
-      finishSentence();
-    }
-    updateButtons();
   }
 };
 
@@ -520,12 +579,13 @@ redoBtn.onclick=()=>{
   translationEl.textContent='';
   setProgress(0);
   saveState(false);
+  showRecordingUI('idle');
   updateButtons();
 };
 
 prevBtn.onclick=()=>{
   if(pageIdx>0){
-    saveState(isPageDone());
+    saveState(pageStates[pageIdx]?.finished || false);
     pageIdx--;
     wentBackOnce=true;
     renderPageFromState();
@@ -534,7 +594,7 @@ prevBtn.onclick=()=>{
 };
 
 nextBtn.onclick=()=>{
-  saveState(isPageDone());
+  saveState(pageStates[pageIdx]?.finished || false);
   if(pageIdx<pages.length-1){
     pageIdx++;
     renderPageFromState();
@@ -545,7 +605,6 @@ nextBtn.onclick=()=>{
 };
 
 function finishSentence(){
-  pausedBetween=true;
   setProgress(1);
   translationEl.textContent=pages[pageIdx].cn||'';
   saveState(true);
@@ -555,33 +614,17 @@ function finishSentence(){
 function isPageDone(){
   const st=pageStates[pageIdx];
   if(st?.finished) return true;
-  const done=(st?.correct?.size||0)+(st?.skipped?.size||0);
-  return done>=words.length&&words.length>0;
+  return (st?.correct?.size||0) >= words.length && words.length>0;
 }
 
 function updateButtons(){
-  prevBtn.style.display=(pageIdx>0)?'inline-block':'none';
-  redoBtn.style.display=wentBackOnce?'inline-block':'none';
-  nextBtn.disabled=!isPageDone();
-  skipBtn.disabled=isPageDone();
-  showRecordingUI(isRunning);
-}
-
-function showRecordingUI(on){
-  if (on) {
-    // 錄音中：顯示紅點 + Stop 文字
-    startBtn.classList.add('rec');
-    startBtn.innerHTML = '<span class="rec-dot"></span><span class="rec-label">Stop</span>';
-  } else {
-    // 沒有錄音：只顯示 Start
-    startBtn.classList.remove('rec');
-    startBtn.textContent = 'Start';
-  }
+  prevBtn.disabled = (pageIdx === 0);
+  nextBtn.disabled = false; // 永遠顯示，最後一句用嚟進入 summary
 }
 
 /* === 把錄音送去 Whisper，並標示正確單字 === */
 async function sendToWhisper(audioBlob){
-  if (!words.length) return;
+  if (!words.length) { showRecordingUI('done'); return; }
 
   const formData = new FormData();
   formData.append("audio", audioBlob, "audio.webm");
@@ -592,6 +635,13 @@ async function sendToWhisper(audioBlob){
       method: "POST",
       body: formData
     });
+
+    if (!res.ok){
+      console.error("Whisper bad response:", res.status);
+      showRecordingUI('idle');
+      return;
+    }
+
     const data = await res.json();
     console.log("Whisper result:", data);
 
@@ -599,36 +649,33 @@ async function sendToWhisper(audioBlob){
     const tokens = spoken.split(/\W+/).filter(Boolean);
     const set = new Set(tokens);
 
-    let newlyCorrect = 0;
-
     for (let i = 0; i < words.length; i++){
       const span = spans[wordSpanIdx[i]];
-      if (!span || span.classList.contains('correct') || span.classList.contains('skipped')) continue;
+      if (!span || span.classList.contains('correct')) continue;
 
       const tgt = words[i].toLowerCase();
       const variants = (wordVariants[tgt] || [tgt]);
       if (variants.some(v => set.has(v.toLowerCase()))){
         span.classList.add('correct');
-        newlyCorrect++;
       }
     }
 
-    saveState(false);
+    saveState(isPageDone());
     const st = pageStates[pageIdx];
     correctCount = st.correct.size;
-    const done = (st.correct.size || 0) + (st.skipped.size || 0);
-    currentIndex = done;
+    currentIndex = correctCount;
     setProgress(correctCount / Math.max(1, words.length));
 
-    if (done >= words.length){
+    if (isPageDone()){
       finishSentence();
-    } else {
-      pausedBetween = false;
-      updateButtons();
     }
+
+    showRecordingUI('done');
+    updateButtons();
 
   } catch(err){
     console.error("Whisper API error:", err);
+    showRecordingUI('idle');
   }
 }
 
@@ -650,19 +697,22 @@ function showSummary(){
 
     const tokens = safe.match(/[A-Za-z']+|\s+|[^\w\s]/g) || [];
 
+    // 找出所有「沒讀對」的 word index
+    const wordOnly = safe.match(/[A-Za-z']+/g) || [];
+    const missed = new Set();
+    for (let i=0;i<wordOnly.length;i++){
+      if (!st?.correct?.has(i)) missed.add(i);
+    }
+
     let wc = 0;
     tokens.forEach(t => {
+      const sp = document.createElement('span');
+      sp.textContent = t;
       if (/^[A-Za-z']+$/.test(t)) {
-        const sp = document.createElement('span');
-        sp.textContent = t;
-        if (st?.skipped?.has(wc)) sp.className = 'skipped';
+        if (missed.has(wc)) sp.className = 'skipped'; // 紅色＝沒讀對
         wc++;
-        line.appendChild(sp);
-      } else {
-        const sp = document.createElement('span');
-        sp.textContent = t;
-        line.appendChild(sp);
       }
+      line.appendChild(sp);
     });
 
     const txt = line.textContent || '';
@@ -687,6 +737,7 @@ function speakWord(w){
 resetLessonState(pages);
 renderPageFromState();
 updateButtons();
+showRecordingUI('idle');
 
 /* 視窗改變重畫 */
 window.addEventListener('resize', ()=>{
