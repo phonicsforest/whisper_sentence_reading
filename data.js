@@ -171,7 +171,7 @@ LESSONS[2] = {
     { text:"I did it.", image:"images/book1_3.png", cn:"我做到了。" },
     { text:"The cat can sit.", image:"images/book2_1.png", cn:"那隻貓會坐下。" },
     { text:"A cat is on the log.", image:"images/book2_2.png", cn:"一隻貓在木頭上。" },
-    { text:"The man can jog.", image:"images/book2_3.png", cn:"那個男人可以慢跑。" }
+    { text:"Ben can jog.", image:"images/book2_3.png", cn:"Ben可以慢跑。" }
 ]
 };
 
@@ -180,7 +180,7 @@ LESSONS[3] = {
   pages: [
     { text:"It is just a prank.", image:"images/book3_2.png", cn:"那只是個惡作劇。" },
     { text:"Kit is a grump.", image:"images/book6_5.png", cn:"Kit是個脾氣暴躁的人。" },
-    { text:"There is a smell.", image:"images/book3_4.png", cn:"那是一股氣味。" },
+    { text:"There is a bad smell.", image:"images/book3_4.png", cn:"那是一股難聞氣味。" },
     { text:"I can win.", image:"images/book1_2.png", cn:"我可以贏。" },
     { text:"The hat is red.", image:"images/book3_7.png", cn:"那頂帽子是紅色的。" }
 ]
@@ -261,7 +261,7 @@ LESSONS[10] = {
   { text:"A trick !",                      image:"images/book11_3.png", cn:"一個把戲！" },
   { text:"The man can fix the lamp.",      image:"images/book13_5.png", cn:"那個男人會修理燈。" },
   { text:"I can kick it.",                 image:"images/book11_7.png", cn:"我可以踢它。" },
-  { text:"The wig",                        image:"images/book12_2.png", cn:"假髮。" }
+  { text:"I tap the brick with a stick.",                        image:"images/book99_39.png", cn:"我用一支棍拍塊磚。" }
 ]
 };
 
@@ -1023,7 +1023,7 @@ LESSONS[73] = {
   pages: [
     { text:"The water in the pool is shallow.", image:"images/book99_27.png", cn:"泳池裡的水很淺。" },
     { text:"I am on the Ferris wheel at the fair.", image:"images/book99_28.png", cn:"我正在嘉年華的摩天輪上。" },
-    { text:"I like vanilla cream.", image:"images/book99_29.png", cn:"我喜歡香草奶油。" },
+    { text:"I like vanilla ice cream.", image:"images/book99_29.png", cn:"我喜歡香草雪糕。" },
     { text:"The chancellor spoke on TV.", image:"images/book99_3.png", cn:"校長在電視上發表演說。" },
     { text:"The tractor made a furrow in the field.", image:"images/book99_31.png", cn:"拖拉機在田裡犁出了一條溝。" },
     { text:"The horse began to gallop fast.", image:"images/book99_32.png", cn:"那匹馬開始快速奔跑。" }
