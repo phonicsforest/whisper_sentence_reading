@@ -354,11 +354,11 @@ LESSONS[18] = {
   title: "Lesson 14-1",
   pages: [
   { text:"I spot him swing|ing.",                         image:"images/book26_2.png", cn:"我看到他盪來盪去。" },
-   { text:"It is a knot.",                  image:"images/book21_2.png", cn:"這是一個結。" },
+   { text:"It is my knot.",                  image:"images/book21_2.png", cn:"這是我的結。" },
   { text:"That pile of trash must stink.", image:"images/book22_1.png", cn:"那堆垃圾一定很臭。" },
   { text:"The man can hang glide up in the sky.", image:"images/book21_3.png", cn:"那個男人可以在天空中玩懸掛式滑翔。" },
   { text:"Luke has rung the bell.",          image:"images/book21_4.png", cn:"Luke已經把鐘敲響了。" },
-  { text:"At the knob.",                   image:"images/book21_5.png", cn:"在門把上。" },
+  { text:"Twist the knob.",                   image:"images/book21_5.png", cn:"扭一下旋鈕。" },
   { text:"That king has a red cape.",      image:"images/book21_6.png", cn:"這位國王穿著紅色長袍。" }
 ]
 };
