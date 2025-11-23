@@ -240,7 +240,7 @@
   .rec-spin{
     border-radius:50%;
     box-sizing:border-box;
-    border:3px solid #ddd;
+    border:3px solid:#ddd;
     border-top-color:#ffa000;
     animation:spin 0.7s linear infinite;
     width:30px;
@@ -319,7 +319,7 @@
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers4</div>
+    <div class="top-title">Phonics Readers 1</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -362,6 +362,7 @@ if (typeof window.LESSONS === 'undefined') { alert('未載入 data.js！'); wind
 
 /* ---------- DOM ---------- */
 const lessonSelectEl = document.getElementById('lessonSelect');
+
 let pixCanvas = document.getElementById('pixCanvas');
 let ctx       = pixCanvas.getContext('2d',{willReadFrequently:true});
 let sentenceDiv   = document.getElementById('sentence');
@@ -391,7 +392,6 @@ const pageStates=[];
 /* Whisper / MediaRecorder */
 let mediaRecorder = null;
 let audioChunks = [];
-let sharedStream = null;   // 共用 mic stream
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
 const AUDIO_PATH = 'audio/';
 let currentAudio = null;
@@ -429,29 +429,6 @@ function autoFitTwoLines(){
 }
 window.addEventListener('resize', autoFitTwoLines);
 
-/* 只問一次 mic 權限，如果舊 stream 死咗就重新攞 */
-async function getSharedStream(){
-  if (sharedStream){
-    const tracks = sharedStream.getAudioTracks();
-    const hasLive = tracks && tracks.some(t => t.readyState === 'live');
-    if (hasLive) return sharedStream;
-    tracks.forEach(t => t.stop());
-    sharedStream = null;
-  }
-  try{
-    sharedStream = await navigator.mediaDevices.getUserMedia({ audio:true });
-    return sharedStream;
-  }catch(e){
-    console.error("getUserMedia error:", e);
-    throw e;
-  }
-}
-window.addEventListener('beforeunload', () => {
-  if (sharedStream){
-    sharedStream.getTracks().forEach(t=>t.stop());
-  }
-});
-
 /* ========== 頂部 Lesson 下拉選單 ========== */
 function renderLessonSelect(){
   lessonSelectEl.innerHTML = '';
@@ -473,7 +450,30 @@ function renderLessonSelect(){
     const val = parseInt(lessonSelectEl.value,10);
     if (!LESSONS[val]) { alert('Lesson ' + val + ' 未設定內容'); return; }
 
-    // 換 lesson 時停晒錄音同 reset UI
+    const panel = document.getElementById('panel');
+    if (!panel.querySelector('#sentenceWrap')) {
+      panel.innerHTML = `
+        <div class="imgBox">
+          <canvas id="pixCanvas"></canvas>
+          <img id="pageImg" alt="">
+        </div>
+        <div class="textCol">
+          <div id="sentenceWrap"><div id="sentence"></div></div>
+          <div id="translation"></div>
+        </div>
+        <div id="pageCounter" class="page-counter"></div>
+      `;
+      pixCanvas    = document.getElementById('pixCanvas');
+      ctx          = pixCanvas.getContext('2d',{willReadFrequently:true});
+      sentenceDiv  = document.getElementById('sentence');
+      translationEl= document.getElementById('translation');
+      sentenceWrap = document.getElementById('sentenceWrap');
+      pageCounterEl= document.getElementById('pageCounter');
+    }
+
+    const controls = document.querySelector('.controls');
+    if (controls) controls.style.display = 'flex';
+
     stopWebSpeech();
     webTranscript = "";
     stopRecording();
@@ -818,7 +818,7 @@ startBtn.onclick = async () => {
 
 async function startWhisperRecording(){
   try {
-    const stream = await getSharedStream();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioChunks = [];
     mediaRecorder = new MediaRecorder(stream);
 
@@ -828,6 +828,8 @@ async function startWhisperRecording(){
 
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+      // 停止 tracks，釋放咪
+      stream.getTracks().forEach(t => t.stop());
       showRecordingUI('analyzing');
       await sendToWhisper(audioBlob);
     };
@@ -947,7 +949,9 @@ function finishSentence(){
 
 /* ---------- Finish Summary ---------- */
 function showSummary(){
-  document.querySelector('.controls').style.display='none';
+  const controls = document.querySelector('.controls');
+  if (controls) controls.style.display = 'none';
+
   const panel = document.getElementById('panel');
   panel.innerHTML = '<div class="summary"><h2>Finish</h2></div>';
   const wrap = panel.querySelector('.summary');
