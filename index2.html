@@ -391,7 +391,7 @@ const pageStates=[];
 /* Whisper / MediaRecorder */
 let mediaRecorder = null;
 let audioChunks = [];
-let sharedStream = null;   // 共用 mic stream（只問一次權限）
+let sharedStream = null;   // 共用 mic stream
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
 const AUDIO_PATH = 'audio/';
 let currentAudio = null;
@@ -429,9 +429,15 @@ function autoFitTwoLines(){
 }
 window.addEventListener('resize', autoFitTwoLines);
 
-/* 只問一次 mic 權限，之後重用 stream */
+/* 只問一次 mic 權限，如果舊 stream 死咗就重新攞 */
 async function getSharedStream(){
-  if (sharedStream && sharedStream.active) return sharedStream;
+  if (sharedStream){
+    const tracks = sharedStream.getAudioTracks();
+    const hasLive = tracks && tracks.some(t => t.readyState === 'live');
+    if (hasLive) return sharedStream;
+    tracks.forEach(t => t.stop());
+    sharedStream = null;
+  }
   try{
     sharedStream = await navigator.mediaDevices.getUserMedia({ audio:true });
     return sharedStream;
@@ -469,6 +475,7 @@ function renderLessonSelect(){
 
     // 換 lesson 時停晒錄音同 reset UI
     stopWebSpeech();
+    webTranscript = "";
     stopRecording();
     showRecordingUI('idle');
 
@@ -757,6 +764,8 @@ function stopWebSpeech(){
 }
 
 startBtn.onclick = async () => {
+  if (startBtn.disabled) return;
+
   if (!isRunning) {
     // 開始錄音
     if (useWebSpeech){
@@ -809,7 +818,7 @@ startBtn.onclick = async () => {
 
 async function startWhisperRecording(){
   try {
-    const stream = await getSharedStream();   // 只第一次問權限
+    const stream = await getSharedStream();
     audioChunks = [];
     mediaRecorder = new MediaRecorder(stream);
 
@@ -819,7 +828,6 @@ async function startWhisperRecording(){
 
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-      // 唔 stop tracks，之後重用同一個 stream
       showRecordingUI('analyzing');
       await sendToWhisper(audioBlob);
     };
@@ -838,6 +846,7 @@ async function startWhisperRecording(){
 prevBtn.onclick = () => {
   if (prevBtn.disabled) return;
   stopWebSpeech();
+  webTranscript = "";
   stopRecording();
   showRecordingUI('idle');
 
@@ -850,6 +859,7 @@ prevBtn.onclick = () => {
 nextBtn.onclick = () => {
   if (nextBtn.disabled) return;
   stopWebSpeech();
+  webTranscript = "";
   stopRecording();
   showRecordingUI('idle');
 
