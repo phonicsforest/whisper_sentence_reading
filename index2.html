@@ -6,13 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{
-    height:100%;
-    overflow-x:hidden;
-    overflow-y:auto;
-    font-family:system-ui,Arial;
-    background:#fafafa;
-  }
+html,body{
+  margin:0;
+  font-family:system-ui,Arial;
+  height:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  background:#fafafa;
+  padding-bottom:90px;   /* ⭐ 新增：避免掣遮住內容 */
+}
+
 
   .app{
     min-height:100vh;
@@ -284,40 +287,54 @@
   .skipped{color:#c00;font-weight:700}
 
   /* ===== 手機版：panel 自己捲，下面掣長期留喺畫面 ===== */
-  @media (max-width: 768px){
-    .app{
-      padding:8px;
-      gap:8px;
-    }
-    .content-row{
-      width:100%;
-      justify-content:center;
-      align-items:stretch;
-    }
-    .panel{
-      width:100%;
-      max-width:100%;
-      flex-direction:column;
-      align-items:stretch;
-      max-height:60vh;      /* panel 最多 60vh 高 */
-      overflow-y:auto;      /* 句子長嘅時候喺 panel 入面捲 */
-    }
-    .imgBox{
-      width:100%;
-      height:auto;
-      max-height:35vh;
-    }
-    #sentenceWrap{
-      width:100%;
-      height:auto;
-      min-height:80px;
-    }
-    .controls{
-      width:100%;
-      justify-content:center;
-      margin-top:8px;
-    }
+/* 手機版調整 */
+@media (max-width: 768px){
+
+  .app{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:8px;
   }
+
+  .content-row{
+    width:100%;
+    display:flex;
+    /* ⭐ 重要：panel 黐近上面左邊 */
+    align-items:flex-start;
+    justify-content:flex-start;
+    margin-top:8px;
+  }
+
+  .panel{
+    margin:8px auto 0;
+    width:100%;
+    max-width:100%;
+    flex-direction:column;
+    align-items:stretch;
+    max-height:60vh;      /* panel 最多 60% 視窗高 */
+    overflow-y:auto;      /* 句子太長喺 panel 入面捲 */
+  }
+
+  .imgBox{
+    width:100%;
+    height:auto;
+    max-height:35vh;
+  }
+
+  #sentenceWrap{
+    width:100%;
+    height:auto;
+    min-height:80px;
+  }
+
+  .controls{
+    width:100%;
+    justify-content:center;
+    margin-top:8px;
+  }
+}
 </style>
 </head>
 <body>
