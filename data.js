@@ -156,7 +156,7 @@ window.LESSONS = {};
 window.LESSONS[1] = {
   title: "Lesson 7-1",
   pages: [
-    { text:"I can fill it.", image:"images/book1_1.png", cn:"我可以把它裝滿。" },
+    { text:"I can.", image:"images/book1_1.png", cn:"我可以把它裝滿。" },
     { text:"Tom can let a cat in.", image:"images/book3_1.png", cn:"Tom可以容計貓入來。" },
     { text:"I can sip it.", image:"images/book1_4.png", cn:"我可以啜一口。" },
     { text:"I can hit it.", image:"images/book1_5.png", cn:"我可以打它。" },
