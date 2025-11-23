@@ -319,7 +319,7 @@
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 1</div>
+    <div class="top-title">Phonics Readers5</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -396,9 +396,13 @@ const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/
 const AUDIO_PATH = 'audio/';
 let currentAudio = null;
 
-/* Web Speech (瀏覽器 Google) */
+/* Web Speech (Browser) — 手機上禁用，避免出事 */
 const WebSR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const useWebSpeech = !!WebSR;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// ✅ 電腦：有 WebSR → 用 Web Speech
+// ✅ 手機：一律 false → 強制用 Whisper
+const useWebSpeech = !!WebSR && !isMobile;
+
 let webRec = null;
 let webTranscript = "";
 
@@ -477,6 +481,7 @@ function renderLessonSelect(){
     stopWebSpeech();
     webTranscript = "";
     stopRecording();
+    audioChunks = [];
     showRecordingUI('idle');
 
     currentLesson = val;
@@ -769,7 +774,7 @@ startBtn.onclick = async () => {
   if (!isRunning) {
     // 開始錄音
     if (useWebSpeech){
-      // --- Browser / Google path ---
+      // --- Browser / Google path (只在電腦用) ---
       webTranscript = "";
       const SR = WebSR;
       webRec = new SR();
@@ -802,6 +807,7 @@ startBtn.onclick = async () => {
       }
 
     } else {
+      // 手機：直接用 Whisper
       await startWhisperRecording();
     }
 
@@ -828,7 +834,6 @@ async function startWhisperRecording(){
 
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-      // 停止 tracks，釋放咪
       stream.getTracks().forEach(t => t.stop());
       showRecordingUI('analyzing');
       await sendToWhisper(audioBlob);
@@ -850,6 +855,7 @@ prevBtn.onclick = () => {
   stopWebSpeech();
   webTranscript = "";
   stopRecording();
+  audioChunks = [];
   showRecordingUI('idle');
 
   if (pageIdx>0){
@@ -863,6 +869,7 @@ nextBtn.onclick = () => {
   stopWebSpeech();
   webTranscript = "";
   stopRecording();
+  audioChunks = [];
   showRecordingUI('idle');
 
   saveState(pageStates[pageIdx]?.finished || false);
