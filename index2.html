@@ -240,7 +240,7 @@
   .rec-spin{
     border-radius:50%;
     box-sizing:border-box;
-    border:3px solid #ddd;
+    border:3px solid:#ddd;
     border-top-color:#ffa000;
     animation:spin 0.7s linear infinite;
     width:30px;
@@ -362,6 +362,7 @@ if (typeof window.LESSONS === 'undefined') { alert('未載入 data.js！'); wind
 
 /* ---------- DOM ---------- */
 const lessonSelectEl = document.getElementById('lessonSelect');
+
 let pixCanvas = document.getElementById('pixCanvas');
 let ctx       = pixCanvas.getContext('2d',{willReadFrequently:true});
 let sentenceDiv   = document.getElementById('sentence');
@@ -391,7 +392,7 @@ const pageStates=[];
 /* Whisper / MediaRecorder */
 let mediaRecorder = null;
 let audioChunks = [];
-let sharedStream = null;   // 共用 mic stream
+let sharedStream = null;
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
 const AUDIO_PATH = 'audio/';
 let currentAudio = null;
@@ -473,7 +474,34 @@ function renderLessonSelect(){
     const val = parseInt(lessonSelectEl.value,10);
     if (!LESSONS[val]) { alert('Lesson ' + val + ' 未設定內容'); return; }
 
-    // 換 lesson 時停晒錄音同 reset UI
+    // 如果之前 Finish 顯示 summary，panel 會被改咗，要還原結構
+    const panel = document.getElementById('panel');
+    if (!panel.querySelector('#sentenceWrap')) {
+      panel.innerHTML = `
+        <div class="imgBox">
+          <canvas id="pixCanvas"></canvas>
+          <img id="pageImg" alt="">
+        </div>
+        <div class="textCol">
+          <div id="sentenceWrap"><div id="sentence"></div></div>
+          <div id="translation"></div>
+        </div>
+        <div id="pageCounter" class="page-counter"></div>
+      `;
+      // 重新抓 DOM
+      pixCanvas    = document.getElementById('pixCanvas');
+      ctx          = pixCanvas.getContext('2d',{willReadFrequently:true});
+      sentenceDiv  = document.getElementById('sentence');
+      translationEl= document.getElementById('translation');
+      sentenceWrap = document.getElementById('sentenceWrap');
+      pageCounterEl= document.getElementById('pageCounter');
+    }
+
+    // 顯示返底部控制區
+    const controls = document.querySelector('.controls');
+    if (controls) controls.style.display = 'flex';
+
+    // 停哂錄音、reset UI
     stopWebSpeech();
     webTranscript = "";
     stopRecording();
@@ -947,7 +975,10 @@ function finishSentence(){
 
 /* ---------- Finish Summary ---------- */
 function showSummary(){
-  document.querySelector('.controls').style.display='none';
+  // 收起底部控制區
+  const controls = document.querySelector('.controls');
+  if (controls) controls.style.display = 'none';
+
   const panel = document.getElementById('panel');
   panel.innerHTML = '<div class="summary"><h2>Finish</h2></div>';
   const wrap = panel.querySelector('.summary');
