@@ -6,27 +6,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-html,body{
+html, body{
   margin:0;
   font-family:system-ui,Arial;
   height:100%;
-  overflow-x:hidden;
-  overflow-y:auto;
+  overflow:hidden;        /* 整個畫面唔會再上下捲 */
   background:#fafafa;
-  padding-bottom:90px;   /* ⭐ 新增：避免掣遮住內容 */
+  color:#111827;
 }
 
+/* 用 flex column，頂：選單；中：panel；底：按鈕 */
+.app{
+  height:100vh;           /* 永遠佔滿電話高度 */
+  width:100vw;
+  display:flex;
+  flex-direction:column;
+  padding:10px;
+  gap:8px;
+}
 
-  .app{
-    min-height:100vh;
-    width:100vw;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    padding:10px;
-  }
+/* 中間放圖 + 句子嗰塊 */
+.content-row{
+  flex:1;                 /* 吃晒中間高度 */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-  /* 頂部：標題 + 下拉式選單 */
+/* panel 高度 = 中間所有高度，裏面再自己分 */
+.panel{
+  width:900px;
+  max-width:100%;
+  height:100%;            /* 撐滿 content-row */
+  background:#fff;
+  border:2px solid #aaa;
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  flex-direction:row;
+  gap:10px;
+  align-items:center;
+}
+
+/* 底部控制條固定喺畫面底，不會再被白色遮 */
+.controls{
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding-bottom:env(safe-area-inset-bottom, 6px);  /* iPhone 底部安全區 */
+}
+
   .topbar{
     display:flex;
     flex-wrap:wrap;
@@ -44,27 +76,8 @@ html,body{
     font-size:15px;
   }
 
-  .content-row{
-    flex:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-  }
 
-  .panel{
-    width:900px;
-    max-width:100%;
-    background:#fff;
-    border:2px solid #aaa;
-    border-radius:10px;
-    padding:10px;
-    display:flex;
-    flex-direction:row;
-    gap:10px;
-    align-items:center;
-  }
-
+ 
   .imgBox{
     height:100%;
     aspect-ratio:1/1;
@@ -173,18 +186,6 @@ html,body{
   }
 
   /* ===== 底部控制區 ===== */
-.controls{
-  grid-column:2;
-  grid-row:2;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:4px;
-  margin-top:4px;
-  min-height:56px; /* 由 80 改細少少，唔好咁高 */
-  padding-bottom: env(safe-area-inset-bottom, 6px); /* iPhone 底邊安全區 */
-}
   .btn-row{
     display:flex;
     align-items:center;
@@ -300,42 +301,33 @@ html,body{
   }
 
   /* content-row 黐返近上面中心 */
-  .content-row{
-    width:100%;
+ .content-row{
+    align-items:stretch;      /* panel 黐住上面 */
     justify-content:center;
-    align-items:flex-start;  /* 上貼少少 */
-    margin-top:4px;
   }
-
-  .panel{
+.panel{
     margin:0 auto;
     width:100%;
     max-width:100%;
-    flex-direction:column;   /* 圖上字下 */
+    flex-direction:column;    /* 圖在上，句子在下 */
     align-items:stretch;
-    /* 🔴 以前呢兩行刪走，避免剪走圖片／句子 */
-    /* max-height:60vh;       */
-    /* overflow-y:auto;       */
   }
 
   .imgBox{
     width:100%;
     height:auto;
-    max-height:40vh;         /* 圖片唔會超晒屏，但唔會被 panel 剪走 */
+    max-height:35vh;          /* 圖片最多用 35% 高度 */
   }
-
-  #sentenceWrap{
+#sentenceWrap{
     width:100%;
+    flex:1;
+    min-height:60px;
     height:auto;
-    min-height:70px;         /* 比之前細少少，減少白位 */
   }
-
-  .controls{
+ .controls{
     width:100%;
-    justify-content:center;
-    margin-top:4px;          /* 圖片句子組同三個掣之間留少少位 */
+    margin-top:4px;
   }
-
   .record-indicator{
     height:28px;
     transform:translateY(-6px); /* 介乎 panel 同按鈕中間 */
