@@ -173,15 +173,18 @@ html,body{
   }
 
   /* ===== 底部控制區 ===== */
-  .controls{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    margin-top:4px;
-    min-height:80px;
-  }
+.controls{
+  grid-column:2;
+  grid-row:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin-top:4px;
+  min-height:56px; /* 由 80 改細少少，唔好咁高 */
+  padding-bottom: env(safe-area-inset-bottom, 6px); /* iPhone 底邊安全區 */
+}
   .btn-row{
     display:flex;
     align-items:center;
@@ -212,13 +215,13 @@ html,body{
   }
 
   /* 錄音指示器 icons */
-  .record-indicator{
-    height:40px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transform:translateY(-30px);
-  }
+.record-indicator{
+  height:28px;                 /* 細啲就冇咁高嘅白位 */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:translateY(-10px); /* 由 -30 改細，唔好升得咁高 */
+}
 
   .rec-icon{
     width:22px;
@@ -289,50 +292,53 @@ html,body{
   /* ===== 手機版：panel 自己捲，下面掣長期留喺畫面 ===== */
 /* 手機版調整 */
 @media (max-width: 768px){
-
   .app{
-    height:auto;
+    padding:8px;
+    gap:6px;
     display:flex;
     flex-direction:column;
-    padding:8px;
-    gap:8px;
   }
 
+  /* content-row 黐返近上面中心 */
   .content-row{
     width:100%;
-    display:flex;
-    /* ⭐ 重要：panel 黐近上面左邊 */
-    align-items:flex-start;
-    justify-content:flex-start;
-    margin-top:8px;
+    justify-content:center;
+    align-items:flex-start;  /* 上貼少少 */
+    margin-top:4px;
   }
 
   .panel{
-    margin:8px auto 0;
+    margin:0 auto;
     width:100%;
     max-width:100%;
-    flex-direction:column;
+    flex-direction:column;   /* 圖上字下 */
     align-items:stretch;
-    max-height:60vh;      /* panel 最多 60% 視窗高 */
-    overflow-y:auto;      /* 句子太長喺 panel 入面捲 */
+    /* 🔴 以前呢兩行刪走，避免剪走圖片／句子 */
+    /* max-height:60vh;       */
+    /* overflow-y:auto;       */
   }
 
   .imgBox{
     width:100%;
     height:auto;
-    max-height:35vh;
+    max-height:40vh;         /* 圖片唔會超晒屏，但唔會被 panel 剪走 */
   }
 
   #sentenceWrap{
     width:100%;
     height:auto;
-    min-height:80px;
+    min-height:70px;         /* 比之前細少少，減少白位 */
   }
 
   .controls{
     width:100%;
     justify-content:center;
-    margin-top:8px;
+    margin-top:4px;          /* 圖片句子組同三個掣之間留少少位 */
+  }
+
+  .record-indicator{
+    height:28px;
+    transform:translateY(-6px); /* 介乎 panel 同按鈕中間 */
   }
 }
 </style>
@@ -340,7 +346,7 @@ html,body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readerse+3</div>
+    <div class="top-title">Phonics Readerse 3</div>
     <select id="lessonSelect"></select>
   </header>
 
