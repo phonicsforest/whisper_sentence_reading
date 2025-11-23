@@ -242,6 +242,55 @@ html,body{
   .summary h2{margin:6px 0 8px;font-size:28px}
   .summary .line{margin:4px 0;font-size:22px}
   .skipped{color:#c00;font-weight:700}
+@media (max-width: 768px){
+
+  .app{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:8px;
+  }
+
+  .sidebar{
+    width:100%;
+    min-height:auto;
+    max-height:140px;
+    overflow-x:auto;
+  }
+
+  .content-row{
+    width:100%;
+    justify-content:center;
+    order:1;
+  }
+
+  .panel{
+    width:100%;
+    max-width:100%;
+    flex-direction:column;      /* 圖片喺上、句子喺下 */
+    align-items:stretch;
+  }
+
+  .imgBox{
+    width:100%;
+    height:auto;
+    max-height:40vh;            /* 圖片唔會太高 */
+  }
+
+  #sentenceWrap{
+    width:100%;
+    height:auto;                /* 方便字體自動縮細 */
+    min-height:80px;
+  }
+
+  .controls{
+    width:100%;
+    justify-content:center;
+    margin-top:8px;
+    order:2;
+  }
+}
 </style>
 </head>
 <body>
@@ -284,59 +333,7 @@ html,body{
 <a href="https://phonicsforest.wordpress.com/" target="_blank">
   <img src="images/logo.png" class="fixed-logo" alt="Phonics Forest Logo">
 </a>
-@media (max-width: 768px){
 
-  /* 整個 app 改用直向 flex，而唔係左右兩欄 grid */
-  .app{
-    height:auto;
-    display:flex;
-    flex-direction:column;
-    padding:8px;
-    gap:8px;
-  }
-
-  /* Sidebar 變做上面一條 */
-  .sidebar{
-    width:100%;
-    min-height:auto;
-    max-height:140px;
-    overflow-x:auto;
-  }
-
-  /* 中間內容一欄，panel 置中 */
-  .content-row{
-    width:100%;
-    justify-content:center;
-    order:1;
-  }
-
-  .panel{
-    width:100%;
-    max-width:100%;
-    flex-direction:column;      /* 圖片喺上、句子喺下 */
-    align-items:stretch;
-  }
-
-  .imgBox{
-    width:100%;
-    height:auto;
-    max-height:40vh;            /* 圖片唔會太高 */
-  }
-
-  #sentenceWrap{
-    width:100%;
-    height:auto;                /* 方便字體自動縮細 */
-    min-height:80px;
-  }
-
-  /* 底部按鈕：永遠喺 panel 下面一行 */
-  .controls{
-    width:100%;
-    justify-content:center;
-    margin-top:8px;
-    order:2;
-  }
-}
 
 <script src="data.js"></script>
 <script>
