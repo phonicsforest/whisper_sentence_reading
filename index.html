@@ -35,10 +35,9 @@ html,body{
   .content-row{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:center;gap:10px}
 
 .panel{
-  width:min(900px, 100%);   /* 桌面 900px，電話就用 100% */
-  max-width:100%;
-  height:auto;              /* 唔再死鎖 420px 高度 */
-  min-height:260px;
+  width:900px;
+  max-width:100%;        /* 細螢幕唔會超出 */
+  height:auto;           /* 唔再死鎖高度，跟內容 */
   background:#fff;
   border:2px solid #aaa;
   border-radius:10px;
@@ -48,61 +47,6 @@ html,body{
   gap:10px;
   align-items:center;
 }
-
-@media (max-width: 768px){
-  /* 整個 app 改做一欄，方便直向捲動 */
-  .app{
-    height:auto;
-    grid-template-columns:1fr;
-    grid-template-rows:auto auto auto;
-    padding:8px;
-  }
-
-  .sidebar{
-    grid-column:1;
-    grid-row:1;
-    min-height:auto;
-    max-height:120px;
-    overflow-x:auto;
-  }
-
-  .content-row{
-    grid-column:1;
-    grid-row:2;
-  }
-
-  .controls{
-    grid-column:1;
-    grid-row:3;
-    margin-top:8px;
-  }
-
-  /* 圖片疊在句子上面，唔會同句子左右擠到好窄 */
-  .panel{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .imgBox{
-    width:100%;
-    height:auto;
-    max-height:40vh;   /* 圖片最多佔 40% 螢幕高度 */
-  }
-
-  #sentenceWrap{
-    height:auto;
-    min-height:80px;
-  }
-}
-
-  /* 右下角句子進度 (第幾句/共幾句) */
-  .page-counter{
-    position:absolute;
-    right:10px;
-    bottom:8px;
-    font-size:12px;
-    color:#666;
-  }
 
   .imgBox{height:100%;aspect-ratio:1/1;overflow:hidden;display:flex;align-items:center;justify-content:center}
   #pixCanvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
@@ -340,6 +284,60 @@ html,body{
 <a href="https://phonicsforest.wordpress.com/" target="_blank">
   <img src="images/logo.png" class="fixed-logo" alt="Phonics Forest Logo">
 </a>
+@media (max-width: 768px){
+
+  /* 整個 app 改用直向 flex，而唔係左右兩欄 grid */
+  .app{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:8px;
+  }
+
+  /* Sidebar 變做上面一條 */
+  .sidebar{
+    width:100%;
+    min-height:auto;
+    max-height:140px;
+    overflow-x:auto;
+  }
+
+  /* 中間內容一欄，panel 置中 */
+  .content-row{
+    width:100%;
+    justify-content:center;
+    order:1;
+  }
+
+  .panel{
+    width:100%;
+    max-width:100%;
+    flex-direction:column;      /* 圖片喺上、句子喺下 */
+    align-items:stretch;
+  }
+
+  .imgBox{
+    width:100%;
+    height:auto;
+    max-height:40vh;            /* 圖片唔會太高 */
+  }
+
+  #sentenceWrap{
+    width:100%;
+    height:auto;                /* 方便字體自動縮細 */
+    min-height:80px;
+  }
+
+  /* 底部按鈕：永遠喺 panel 下面一行 */
+  .controls{
+    width:100%;
+    justify-content:center;
+    margin-top:8px;
+    order:2;
+  }
+}
+
 <script src="data.js"></script>
 <script>
 /* ---------- 安全後備 ---------- */
