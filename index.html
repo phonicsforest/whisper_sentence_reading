@@ -6,7 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;overflow:hidden;font-family:system-ui,Arial;background:#fafafa}
+html,body{
+  height:100%;
+  overflow-x:hidden;   /* 橫向唔好出 scrollbar */
+  overflow-y:auto;     /* 直向可以捲動 */
+  font-family:system-ui,Arial;
+  background:#fafafa;
+}
 
   .app{
     height:100vh;
@@ -28,19 +34,66 @@
 
   .content-row{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:center;gap:10px}
 
-  .panel{
-    width:900px;
-    height:420px;
-    background:#fff;
-    border:2px solid #aaa;
-    border-radius:10px;
-    padding:10px;
-    display:flex;
-    flex-direction:row;
-    gap:10px;
-    align-items:center;
-    position:relative;          /* 為 page-counter 定位用 */
+.panel{
+  width:min(900px, 100%);   /* 桌面 900px，電話就用 100% */
+  max-width:100%;
+  height:auto;              /* 唔再死鎖 420px 高度 */
+  min-height:260px;
+  background:#fff;
+  border:2px solid #aaa;
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  flex-direction:row;
+  gap:10px;
+  align-items:center;
+}
+
+@media (max-width: 768px){
+  /* 整個 app 改做一欄，方便直向捲動 */
+  .app{
+    height:auto;
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto;
+    padding:8px;
   }
+
+  .sidebar{
+    grid-column:1;
+    grid-row:1;
+    min-height:auto;
+    max-height:120px;
+    overflow-x:auto;
+  }
+
+  .content-row{
+    grid-column:1;
+    grid-row:2;
+  }
+
+  .controls{
+    grid-column:1;
+    grid-row:3;
+    margin-top:8px;
+  }
+
+  /* 圖片疊在句子上面，唔會同句子左右擠到好窄 */
+  .panel{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .imgBox{
+    width:100%;
+    height:auto;
+    max-height:40vh;   /* 圖片最多佔 40% 螢幕高度 */
+  }
+
+  #sentenceWrap{
+    height:auto;
+    min-height:80px;
+  }
+}
 
   /* 右下角句子進度 (第幾句/共幾句) */
   .page-counter{
