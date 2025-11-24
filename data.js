@@ -434,7 +434,7 @@ title: "Lesson 16-4",
   { text:"Dash made a deep trench.",             image:"images/book28_5.png", cn:"Dash能挖一條深溝。" },
   { text:"The fish can eat sea|weed.",                  image:"images/book26_3.png", cn:"那條大魚會嚼食海草。" },
   { text:"He will sweep up the dust.",                         image:"images/book26_4.png", cn:"他會把灰塵打掃乾淨。" },
-  { text:"A cat is on the beach by a stea|ming hot spring .", image:"images/book26_6.png", cn:"一隻貓在溫泉旁的海灘上。" }
+  { text:"It is on the beach by a stea|ming spring .", image:"images/book26_6.png", cn:"牠在溫泉旁的海灘上。" }
 ]
 };
 
