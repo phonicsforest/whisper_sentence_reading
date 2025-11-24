@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,13 @@
 <title>Whisper Sentence Reading (Hybrid)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+:root{
+  /* 大約係上面標題 + lesson 下拉的高度 */
+  --header-h: 56px;
+  /* 下面 PREVIOUS | START | NEXT + 錄音圈 個高度 */
+  --controls-h: 120px;
+}
+
   *{box-sizing:border-box;margin:0;padding:0}
 html, body{
   margin:0;
@@ -25,40 +33,44 @@ html, body{
   gap:8px;
 }
 
-/* 中間放圖 + 句子嗰塊 */
 .content-row{
-  flex:1;                 /* 吃晒中間高度 */
+  flex: 1;
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:flex-start;
+  padding:8px 10px;
 }
 
-/* panel 高度 = 中間所有高度，裏面再自己分 */
 .panel{
   width:900px;
   max-width:100%;
-  height:100%;            /* 撐滿 content-row */
   background:#fff;
   border:2px solid #aaa;
   border-radius:10px;
   padding:10px;
   display:flex;
-  flex-direction:row;
+  flex-direction:column;   /* 建議用 column：圖在上、句子在下 */
   gap:10px;
-  align-items:center;
+  align-items:stretch;
+
+  /* 🎯 重要：自動用盡畫面高度，只留少少位比錄音區 */
+  min-height: calc(100vh - var(--header-h) - var(--controls-h) - 24px);
 }
 
 /* 底部控制條固定喺畫面底，不會再被白色遮 */
 .controls{
-  flex-shrink:0;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:var(--controls-h);
+  background:#fafafa;
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:center;
-  gap:4px;
-  padding-bottom:env(safe-area-inset-bottom, 6px);  /* iPhone 底部安全區 */
+  justify-content:flex-start;
+  padding:6px 0 10px;
 }
-
   .topbar{
     display:flex;
     flex-wrap:wrap;
@@ -219,13 +231,12 @@ html, body{
 
   /* 錄音指示器 icons */
 .record-indicator{
-  height:28px;                 /* 細啲就冇咁高嘅白位 */
   display:flex;
   align-items:center;
   justify-content:center;
-  transform:translateY(-10px); /* 由 -30 改細，唔好升得咁高 */
+  height:34px;      /* 預留位比紅圈 / 黃圈 / 綠 tick */
+  margin-bottom:8px;/* 錄音圈 ↔ PREVIOUS/START/NEXT 嘅距離 */
 }
-
   .rec-icon{
     width:22px;
     height:22px;
@@ -295,47 +306,86 @@ html, body{
   /* ===== 手機版：panel 自己捲，下面掣長期留喺畫面 ===== */
 /* 手機版調整 */
 @media (max-width: 768px){
-  .app{
+
+  /* 整個 app 係直向排列：上 lesson， 中 panel， 下固定按鈕 */
+   .app{
     padding:8px;
-    gap:6px;
-    display:flex;
-    flex-direction:column;
+    gap:8px;
   }
 
-  /* content-row 黐返近上面中心 */
- .content-row{
-    align-items:stretch;      /* panel 黐住上面 */
-    justify-content:center;
+  /* 🔝 Lesson 清單在最上面一行（代替左邊 sidebar） */
+  .sidebar{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    width:100%;
+    max-height:40px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:0 2px;
   }
-.panel{
-    margin: 0 auto;
-    width: 100%;
-    max-width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    max-height: 60vh;          /* 由 72vh → 60vh ，令上面有位顯示 LESSON 選單 */
-    overflow-y: auto;
+
+  .lesson-title{
+    margin-right:8px;
+    font-size:14px;
+    white-space:nowrap;
+  }
+
+  .lesson-list{
+    display:flex;
+    flex-direction:row;
+    gap:4px;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+
+  .lesson-item{
+    display:inline-block;
+    white-space:nowrap;
+    padding:2px 6px;
+    font-size:13px;
+  }
+
+  /* 中間內容區：panel 喺畫面中間 */
+.content-row{
+    width:100%;
+    justify-content:center;
+    align-items:flex-start;  /* panel 黐近上面 */
+    margin-top:6px;
+  }
+
+ .panel{
+    margin:6px auto 0;
+    width:100%;
+    max-width:100%;
+    flex-direction:column;
+    align-items:stretch;
+
+    /* 重要：panel 最高只會係 「全個viewport高度 - 230px」 */
+    max-height:calc(100vh - 230px);
+    overflow-y:auto;         /* 如果字太多，就喺panel 入面捲 */
   }
  .imgBox{
-    width: 100%;
-    max-height: 30vh;          /* 由 35vh → 30vh，讓句子部分更易自動縮細 */
+    width:100%;
+    height:auto;
+    max-height:40vh;         /* 圖片最多佔約4成高度 */
   }
-#sentenceWrap{
-    width: 100%;
-    height: auto;
-    min-height: 60px;          /* 再細啲都得，因為會自動縮字 */
+  #sentenceWrap{
+    width:100%;
+    height:auto;
+    min-height:70px;
   }
+  #sentence{
+    max-width:100%;
+    text-align:center;
+    line-height:1.18;
+  }
+
+  /* 底部按鈕：你之前已經 fixed bottom，呢度唔改佢，只係確保闊度 */
  .controls{
     width:100%;
-    margin-top:4px;
-  }
-  .record-indicator{
-    height:28px;
-    transform:translateY(-6px); /* 介乎 panel 同按鈕中間 */
-  }
- #translation{
-    font-size: 18px;           /* 中文翻譯再細啲 */
-    margin-top: 2px;           /* 句子與翻譯距離更細 */
+    justify-content:center;
+    margin-top:6px;
   }
 }
 </style>
@@ -343,7 +393,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 10</div>
+    <div class="top-title">Phonics Readers 100</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -445,15 +495,44 @@ function resetLessonState(newPages){
 }
 
 function autoFitTwoLines(){
-  let size = 80;                        // 初始字體
+  if (!sentenceDiv || !sentenceWrap) return;
+
+  // 先估下有幾多字
+  const text = sentenceDiv.textContent.trim();
+  const wordCount = text ? text.split(/\s+/).length : 0;
+
+  // 根據字數揀一個「起始字體」
+  // 句子短 → 大字；句子長 → 細啲
+  let size;
+  if (wordCount <= 3) {
+    size = 80;        // 好短句：I can. 之類
+  } else if (wordCount <= 6) {
+    size = 68;        // 中等長度
+  } else if (wordCount <= 10) {
+    size = 56;        // 再長少少
+  } else {
+    size = 48;        // 好長句
+  }
+
+  const minSize = 26;
+
   sentenceDiv.style.fontSize = size + 'px';
 
-  const maxH = sentenceWrap.clientHeight * 0.60;  // 由 0.95 → 0.60（縮得更多）
-  const maxW = sentenceWrap.clientWidth * 0.95;
+  // 最大高度係句子區嘅 95%
+  const maxH = sentenceWrap.clientHeight * 0.95;
+  const maxW = sentenceWrap.clientWidth * 0.98;
 
-  while ((sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW) && size > 20) {
+  // 如果仲塞唔落，就慢慢－2px 直到啱位
+  while (size > minSize &&
+        (sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW)) {
     size -= 2;
     sentenceDiv.style.fontSize = size + 'px';
+  }
+
+  // 中文翻譯跟英文比例縮細 / 變大（大約半至六成）
+  if (translationEl) {
+    const cnSize = Math.max(18, Math.round(size * 0.55));
+    translationEl.style.fontSize = cnSize + 'px';
   }
 }
 
