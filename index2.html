@@ -49,11 +49,12 @@ html, body{
   border-radius:10px;
   padding:10px;
   display:flex;
-  flex-direction:column;   /* 建議用 column：圖在上、句子在下 */
+  flex-direction:column;
   gap:10px;
   align-items:stretch;
 
-  /* 🎯 重要：自動用盡畫面高度，只留少少位比錄音區 */
+  /* 電腦版：唔要固定高度，跟內容就得 */
+  /* min-height: calc(100vh - var(--header-h) - var(--controls-h) - 24px); */
 }
 
 /* 底部控制條固定喺畫面底，不會再被白色遮 */
@@ -360,15 +361,13 @@ html, body{
     flex-direction:column;
     align-items:stretch;
 
-    /* 覆蓋上面嗰個 min-height，唔好咁長 */
-    min-height:auto;
+    /* 📏 電話上：黑框永遠固定高度，大約佔畫面 68% */
+    height:68vh;           /* 主高度 */
+    min-height:68vh;       /* 防止比內容拉長 */
+    max-height:68vh;       /* 防止再長 */
 
-    /* 收短黑框：如果仲睇唔晒，可以由 260 改 280、300 試下 */
-    min-height: auto !important;
- max-height:calc(100vh + 100px);
-    overflow-y:auto;
+    overflow-y:auto;       /* 字太多就喺黑框裏面捲 */
   }
-
  .imgBox{
     width:100%;
     height:auto;
@@ -397,7 +396,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 333</div>
+    <div class="top-title">Phonics Readers</div>
     <select id="lessonSelect"></select>
   </header>
 
