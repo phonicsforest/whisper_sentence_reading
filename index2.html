@@ -41,20 +41,16 @@ html, body{
 }
 
 .panel{
-  width:900px;
-  max-width:100%;
-  background:#fff;
-  border:2px solid #aaa;
-  border-radius:10px;
-  padding:10px;
-  display:flex;
-  flex-direction:column;   /* 建議用 column：圖在上、句子在下 */
-  gap:10px;
-  align-items:stretch;
+    margin:6px auto 0;
+    width:100%;
+    max-width:100%;
+    flex-direction:column;
+    align-items:stretch;
 
-  /* 🎯 重要：自動用盡畫面高度，只留少少位比錄音區 */
-  min-height: calc(100vh - var(--header-h) - var(--controls-h) - 24px);
-}
+    /* ✅ 新：panel 高度再矮啲，確保黑框唔會俾下面掣遮住 */
+    max-height:calc(100vh - 260px);
+    overflow-y:auto;         /* 字太多就喺 panel 裏面捲 */
+  }
 
 /* 底部控制條固定喺畫面底，不會再被白色遮 */
 .controls{
@@ -89,13 +85,10 @@ html, body{
 
 
  
-  .imgBox{
-    height:100%;
-    aspect-ratio:1/1;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center
+ .imgBox{
+    width:100%;
+    height:auto;
+    max-height:32vh;         /* ✅ 圖片再細少少，留多啲位畀句子 */
   }
   #pixCanvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
   #pageImg{display:none}
@@ -392,7 +385,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 9</div>
+    <div class="top-title">Phonics Readers 3</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -496,39 +489,48 @@ function resetLessonState(newPages){
 function autoFitTwoLines(){
   if (!sentenceDiv || !sentenceWrap) return;
 
-  // 先估下有幾多字
   const text = sentenceDiv.textContent.trim();
   const wordCount = text ? text.split(/\s+/).length : 0;
 
-  // 根據字數揀一個「起始字體」
-  // 句子短 → 大字；句子長 → 細啲
+  // 📏 根據字數決定起始字體（比之前再大少少）
   let size;
   if (wordCount <= 3) {
-    size = 80;        // 好短句：I can. 之類
+    size = 90;        // 好短句：I can. 之類
   } else if (wordCount <= 6) {
-    size = 68;        // 中等長度
+    size = 78;        // 中等長度
   } else if (wordCount <= 10) {
-    size = 56;        // 再長少少
+    size = 66;        // 再長少少
   } else {
-    size = 48;        // 好長句
+    size = 54;        // 好長句
   }
 
   const minSize = 26;
-
   sentenceDiv.style.fontSize = size + 'px';
 
-  // 最大高度係句子區嘅 95%
-  const maxH = sentenceWrap.clientHeight * 0.95;
+  const isMobile = window.innerWidth <= 768;
+
+  // ✅ 高度限制：電腦嚴格啲，手機鬆少少
+  const maxH = isMobile
+    ? sentenceWrap.clientHeight * 1.05   // 手機：可以略為超少少
+    : sentenceWrap.clientHeight * 0.95;
+
   const maxW = sentenceWrap.clientWidth * 0.98;
 
-  // 如果仲塞唔落，就慢慢－2px 直到啱位
-  while (size > minSize &&
-        (sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW)) {
+  // 只要超出高度「同時」超出闊度，先再縮，
+  // 盡量避免明明仲有位都縮到好細
+  while (
+    size > minSize &&
+    (
+      sentenceDiv.scrollWidth > maxW ||
+      (!isMobile && sentenceDiv.scrollHeight > maxH) ||
+      (isMobile && sentenceDiv.scrollHeight > maxH && sentenceDiv.scrollWidth > maxW)
+    )
+  ) {
     size -= 2;
     sentenceDiv.style.fontSize = size + 'px';
   }
 
-  // 中文翻譯跟英文比例縮細 / 變大（大約半至六成）
+  // 中文翻譯跟英文比例縮放（約 55%）
   if (translationEl) {
     const cnSize = Math.max(18, Math.round(size * 0.55));
     translationEl.style.fontSize = cnSize + 'px';
