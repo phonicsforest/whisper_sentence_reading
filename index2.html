@@ -125,7 +125,7 @@ html, body{
     align-items:center;
     justify-content:center;
     color:#333;
-    font-size:22px;
+    font-size:15px;
     text-align:center;
     margin-top: 4px !important;
   }
@@ -396,7 +396,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Reader3</div>
+    <div class="top-title">Reader</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -532,12 +532,6 @@ function autoFitTwoLines(){
     sentenceDiv.style.fontSize = size + 'px';
   }
 
-  // 中文翻譯跟英文比例縮細 / 變大（大約半至六成）
-  if (translationEl) {
-    const cnSize = Math.max(18, Math.round(size * 0.55));
-    translationEl.style.fontSize = cnSize + 'px';
-  }
-}
 
 function ensureControlsVisible(){
   // 手機上確保控制區喺畫面內，減少用戶自己捲到上上落落
