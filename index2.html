@@ -295,47 +295,91 @@ html, body{
   /* ===== 手機版：panel 自己捲，下面掣長期留喺畫面 ===== */
 /* 手機版調整 */
 @media (max-width: 768px){
+
+  /* 整個 app 係直向排列：上 lesson， 中 panel， 下固定按鈕 */
   .app{
-    padding:8px;
-    gap:6px;
     display:flex;
     flex-direction:column;
+    padding:8px 8px 76px;   /* 底留位比固定按鈕 */
+    gap:6px;
+    height:auto;
+    min-height:100vh;
   }
 
-  /* content-row 黐返近上面中心 */
- .content-row{
-    align-items:stretch;      /* panel 黐住上面 */
+  /* 🔝 Lesson 清單在最上面一行（代替左邊 sidebar） */
+  .sidebar{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    width:100%;
+    max-height:40px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:0 2px;
+  }
+
+  .lesson-title{
+    margin-right:8px;
+    font-size:14px;
+    white-space:nowrap;
+  }
+
+  .lesson-list{
+    display:flex;
+    flex-direction:row;
+    gap:4px;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+
+  .lesson-item{
+    display:inline-block;
+    white-space:nowrap;
+    padding:2px 6px;
+    font-size:13px;
+  }
+
+  /* 中間內容區：panel 喺畫面中間 */
+  .content-row{
+    flex:1;
+    width:100%;
+    align-items:flex-start;   /* panel 黐近上面啲 */
     justify-content:center;
   }
-.panel{
-    margin: 0 auto;
-    width: 100%;
-    max-width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    max-height: 60vh;          /* 由 72vh → 60vh ，令上面有位顯示 LESSON 選單 */
-    overflow-y: auto;
-  }
- .imgBox{
-    width: 100%;
-    max-height: 30vh;          /* 由 35vh → 30vh，讓句子部分更易自動縮細 */
-  }
-#sentenceWrap{
-    width: 100%;
-    height: auto;
-    min-height: 60px;          /* 再細啲都得，因為會自動縮字 */
-  }
- .controls{
+
+  .panel{
+    margin:0 auto;
     width:100%;
-    margin-top:4px;
+    max-width:100%;
+    flex-direction:column;     /* 圖上、字下 */
+    align-items:stretch;
+    /* panel 高度 = 全高 - lesson 行 - 底部按鈕 */
+    max-height:calc(100vh - 40px - 76px - 8px);
+    overflow-y:auto;           /* 如果中文字好多，就喺 panel 入面捲 */
   }
-  .record-indicator{
-    height:28px;
-    transform:translateY(-6px); /* 介乎 panel 同按鈕中間 */
+
+  .imgBox{
+    width:100%;
+    height:auto;
+    max-height:40vh;           /* 圖唔會太高，留位比句子 */
   }
- #translation{
-    font-size: 18px;           /* 中文翻譯再細啲 */
-    margin-top: 2px;           /* 句子與翻譯距離更細 */
+
+  #sentenceWrap{
+    width:100%;
+    height:auto;
+    min-height:70px;
+  }
+
+  #sentence{
+    max-width:100%;
+    text-align:center;
+    line-height:1.18;
+  }
+
+  /* 底部按鈕：你之前已經 fixed bottom，呢度唔改佢，只係確保闊度 */
+  .controls{
+    width:100%;
+    justify-content:center;
   }
 }
 </style>
