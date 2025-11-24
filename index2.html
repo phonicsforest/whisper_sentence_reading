@@ -54,6 +54,7 @@ html, body{
   align-items:stretch;
 
   /* 🎯 重要：自動用盡畫面高度，只留少少位比錄音區 */
+  min-height: calc(100vh - var(--header-h) - var(--controls-h) - 24px);
 }
 
 /* 底部控制條固定喺畫面底，不會再被白色遮 */
@@ -364,8 +365,8 @@ html, body{
     min-height:auto;
 
     /* 收短黑框：如果仲睇唔晒，可以由 260 改 280、300 試下 */
-    max-height:calc(100vh + 100px);
-
+    min-height: auto !important;
+ max-height:calc(100vh + 100px);
     overflow-y:auto;
   }
 
@@ -397,7 +398,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 200</div>
+    <div class="top-title">Phonics Readers @@@</div>
     <select id="lessonSelect"></select>
   </header>
 
