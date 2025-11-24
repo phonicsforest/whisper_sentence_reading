@@ -365,7 +365,7 @@ html, body{
     min-height:auto;
 
     /* 收短黑框：如果仲睇唔晒，可以由 260 改 280、300 試下 */
-    max-height:calc(100vh - 500px);
+    max-height:calc(100vh - 50px);
 
     overflow-y:auto;
   }
@@ -373,7 +373,7 @@ html, body{
  .imgBox{
     width:100%;
     height:auto;
- //   max-height:30vh;         /* 圖片最多佔約4成高度 */
+ //   max-height:40vh;         /* 圖片最多佔約4成高度 */
   }
   #sentenceWrap{
     width:100%;
@@ -398,7 +398,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 500a</div>
+    <div class="top-title">Phonics Readers 100a</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -512,11 +512,11 @@ function autoFitTwoLines(){
   if (wordCount <= 3) {
     size = 80;        // 好短句：I can. 之類
   } else if (wordCount <= 6) {
-    size = 75;        // 中等長度
+    size = 80;        // 中等長度
   } else if (wordCount <= 10) {
-    size = 70;        // 再長少少
+    size = 80;        // 再長少少
   } else {
-    size = 65;        // 好長句
+    size = 80;        // 好長句
   }
 
   const minSize = 26;
