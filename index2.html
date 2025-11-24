@@ -115,7 +115,7 @@ html, body{
     color:#333;
     font-size:22px;
     text-align:center;
-    margin-top:8px
+    margin-top: 4px !important;
   }
 
   .page-counter{
@@ -130,8 +130,8 @@ html, body{
     display:inline-block;
     white-space:nowrap;
     color:#777;
-    margin-left:2px;
-    margin-right:0;
+    margin-left: 1px;
+  margin-right: 0;
   }
   .o-nest{
     position:relative;
@@ -155,7 +155,9 @@ html, body{
     pointer-events:none;
   }
   .word > *{ white-space:nowrap; }
-
+.word{
+  margin: 0 4px;     /* 原本 6px → 4px，英文之間更貼身 */
+}
   .o-nest::after{
     content:'o';
     position:absolute;
@@ -306,23 +308,22 @@ html, body{
     justify-content:center;
   }
 .panel{
-    margin:0 auto;
-    width:100%;
-    max-width:100%;
-    flex-direction:column;    /* 圖在上，句子在下 */
-    align-items:stretch;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    max-height: 60vh;          /* 由 72vh → 60vh ，令上面有位顯示 LESSON 選單 */
+    overflow-y: auto;
   }
-
-  .imgBox{
-    width:100%;
-    height:auto;
-    max-height:35vh;          /* 圖片最多用 35% 高度 */
+ .imgBox{
+    width: 100%;
+    max-height: 30vh;          /* 由 35vh → 30vh，讓句子部分更易自動縮細 */
   }
 #sentenceWrap{
-    width:100%;
-    flex:1;
-    min-height:60px;
-    height:auto;
+    width: 100%;
+    height: auto;
+    min-height: 60px;          /* 再細啲都得，因為會自動縮字 */
   }
  .controls{
     width:100%;
@@ -332,13 +333,17 @@ html, body{
     height:28px;
     transform:translateY(-6px); /* 介乎 panel 同按鈕中間 */
   }
+ #translation{
+    font-size: 18px;           /* 中文翻譯再細啲 */
+    margin-top: 2px;           /* 句子與翻譯距離更細 */
+  }
 }
 </style>
 </head>
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 7</div>
+    <div class="top-title">Phonics Readers 0</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -440,10 +445,13 @@ function resetLessonState(newPages){
 }
 
 function autoFitTwoLines(){
-  let size = 80;
+  let size = 80;                        // 初始字體
   sentenceDiv.style.fontSize = size + 'px';
-  const maxH = sentenceWrap.clientHeight * 0.95;
-  while ((sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > sentenceWrap.clientWidth) && size > 26) {
+
+  const maxH = sentenceWrap.clientHeight * 0.60;  // 由 0.95 → 0.60（縮得更多）
+  const maxW = sentenceWrap.clientWidth * 0.95;
+
+  while ((sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW) && size > 20) {
     size -= 2;
     sentenceDiv.style.fontSize = size + 'px';
   }
