@@ -307,13 +307,9 @@ html, body{
 @media (max-width: 768px){
 
   /* 整個 app 係直向排列：上 lesson， 中 panel， 下固定按鈕 */
-  .app{
-    display:flex;
-    flex-direction:column;
-    padding:8px 8px 76px;   /* 底留位比固定按鈕 */
-    gap:6px;
-    height:auto;
-    min-height:100vh;
+   .app{
+    padding:8px;
+    gap:8px;
   }
 
   /* 🔝 Lesson 清單在最上面一行（代替左邊 sidebar） */
@@ -350,36 +346,34 @@ html, body{
   }
 
   /* 中間內容區：panel 喺畫面中間 */
-  .content-row{
-    flex:1;
+.content-row{
     width:100%;
-    align-items:flex-start;   /* panel 黐近上面啲 */
     justify-content:center;
+    align-items:flex-start;  /* panel 黐近上面 */
+    margin-top:6px;
   }
 
-  .panel{
-    margin:0 auto;
+ .panel{
+    margin:6px auto 0;
     width:100%;
     max-width:100%;
-    flex-direction:column;     /* 圖上、字下 */
+    flex-direction:column;
     align-items:stretch;
-    /* panel 高度 = 全高 - lesson 行 - 底部按鈕 */
-    max-height:calc(100vh - 40px - 76px - 8px);
-    overflow-y:auto;           /* 如果中文字好多，就喺 panel 入面捲 */
-  }
 
-  .imgBox{
+    /* 重要：panel 最高只會係 「全個viewport高度 - 230px」 */
+    max-height:calc(100vh - 230px);
+    overflow-y:auto;         /* 如果字太多，就喺panel 入面捲 */
+  }
+ .imgBox{
     width:100%;
     height:auto;
-    max-height:40vh;           /* 圖唔會太高，留位比句子 */
+    max-height:40vh;         /* 圖片最多佔約4成高度 */
   }
-
   #sentenceWrap{
     width:100%;
     height:auto;
     min-height:70px;
   }
-
   #sentence{
     max-width:100%;
     text-align:center;
@@ -387,9 +381,10 @@ html, body{
   }
 
   /* 底部按鈕：你之前已經 fixed bottom，呢度唔改佢，只係確保闊度 */
-  .controls{
+ .controls{
     width:100%;
     justify-content:center;
+    margin-top:6px;
   }
 }
 </style>
@@ -397,7 +392,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers 0</div>
+    <div class="top-title">Phonics Readers 9</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -499,15 +494,44 @@ function resetLessonState(newPages){
 }
 
 function autoFitTwoLines(){
-  let size = 80;                        // 初始字體
+  if (!sentenceDiv || !sentenceWrap) return;
+
+  // 先估下有幾多字
+  const text = sentenceDiv.textContent.trim();
+  const wordCount = text ? text.split(/\s+/).length : 0;
+
+  // 根據字數揀一個「起始字體」
+  // 句子短 → 大字；句子長 → 細啲
+  let size;
+  if (wordCount <= 3) {
+    size = 80;        // 好短句：I can. 之類
+  } else if (wordCount <= 6) {
+    size = 68;        // 中等長度
+  } else if (wordCount <= 10) {
+    size = 56;        // 再長少少
+  } else {
+    size = 48;        // 好長句
+  }
+
+  const minSize = 26;
+
   sentenceDiv.style.fontSize = size + 'px';
 
-  const maxH = sentenceWrap.clientHeight * 0.60;  // 由 0.95 → 0.60（縮得更多）
-  const maxW = sentenceWrap.clientWidth * 0.95;
+  // 最大高度係句子區嘅 95%
+  const maxH = sentenceWrap.clientHeight * 0.95;
+  const maxW = sentenceWrap.clientWidth * 0.98;
 
-  while ((sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW) && size > 20) {
+  // 如果仲塞唔落，就慢慢－2px 直到啱位
+  while (size > minSize &&
+        (sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW)) {
     size -= 2;
     sentenceDiv.style.fontSize = size + 'px';
+  }
+
+  // 中文翻譯跟英文比例縮細 / 變大（大約半至六成）
+  if (translationEl) {
+    const cnSize = Math.max(18, Math.round(size * 0.55));
+    translationEl.style.fontSize = cnSize + 'px';
   }
 }
 
