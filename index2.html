@@ -354,17 +354,22 @@ html, body{
     margin-top:6px;
   }
 
- .panel{
+.panel{
     margin:6px auto 0;
     width:100%;
     max-width:100%;
     flex-direction:column;
     align-items:stretch;
 
-    /* 重要：panel 最高只會係 「全個viewport高度 - 230px」 */
-    max-height:calc(100vh - 230px);
-    overflow-y:auto;         /* 如果字太多，就喺panel 入面捲 */
+    /* 覆蓋上面嗰個 min-height，唔好咁長 */
+    min-height:auto;
+
+    /* 收短黑框：如果仲睇唔晒，可以由 260 改 280、300 試下 */
+    max-height:calc(100vh - 260px);
+
+    overflow-y:auto;
   }
+
  .imgBox{
     width:100%;
     height:auto;
