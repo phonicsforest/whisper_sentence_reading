@@ -362,9 +362,9 @@ html, body{
     align-items:stretch;
 
     /* 📏 電話上：黑框永遠固定高度，大約佔畫面 68% */
-    height:70vh;           /* 主高度 */
-    min-height:70vh;       /* 防止比內容拉長 */
-    max-height:70vh;       /* 防止再長 */
+    height:66vh;           /* 主高度 */
+    min-height:66vh;       /* 防止比內容拉長 */
+    max-height:66vh;       /* 防止再長 */
 
     overflow-y:auto;       /* 字太多就喺黑框裏面捲 */
   }
@@ -396,7 +396,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Readers34</div>
+    <div class="top-title">Readers66</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -508,16 +508,16 @@ function autoFitTwoLines(){
   // 句子短 → 大字；句子長 → 細啲
   let size;
   if (wordCount <= 3) {
-    size = 80;        // 好短句：I can. 之類
+    size = 70;        // 好短句：I can. 之類
   } else if (wordCount <= 6) {
-    size = 75;        // 中等長度
+    size = 65;        // 中等長度
   } else if (wordCount <= 10) {
-    size = 70;        // 再長少少
+    size = 60;        // 再長少少
   } else {
-    size = 65;        // 好長句
+    size = 55;        // 好長句
   }
 
-  const minSize = 34;
+  const minSize = 36;
 
   sentenceDiv.style.fontSize = size + 'px';
 
