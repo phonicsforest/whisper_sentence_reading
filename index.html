@@ -1,106 +1,189 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Whisper Sentence Reading</title>
+<title>Whisper Sentence Reading (Hybrid)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+:root{
+  /* 大約係上面標題 + lesson 下拉的高度 */
+  --header-h: 56px;
+  /* 下面 PREVIOUS | START | NEXT + 錄音圈 個高度 */
+  --controls-h: 120px;
+}
+
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;overflow:hidden;font-family:system-ui,Arial;background:#fafafa}
+html, body{
+  margin:0;
+  font-family:system-ui,Arial;
+  height:100%;
+  overflow:hidden;        /* 整個畫面唔會再上下捲 */
+  background:#fafafa;
+  color:#111827;
+}
 
-  .app{
-    height:100vh;
-    width:100vw;
-    display:grid;
-    grid-template-columns:180px 1fr;
-    grid-template-rows:auto auto;
-    gap:8px;
-    padding:10px;
-  }
+/* 用 flex column，頂：選單；中：panel；底：按鈕 */
+.app{
+  height:100vh;           /* 永遠佔滿電話高度 */
+  width:100vw;
+  display:flex;
+  flex-direction:column;
+  padding:10px;
+  gap:8px;
+}
 
-  .sidebar{grid-column:1 / 2;grid-row:1 / 3;display:flex;flex-direction:column;min-height:0}
-  .lesson-title{font-weight:700;margin-bottom:6px}
-  .lesson-list{overflow:auto;flex:1}
-  .lesson-item{padding:4px 6px;cursor:pointer;font-size:14px;border-radius:6px}
-  .lesson-item:hover{background:#f3f3f3}
-  .lesson-item.active{font-weight:700;color:#1976d2}
-  .lesson-item.disabled{opacity:.45;cursor:not-allowed}
+.content-row{
+  flex: 1;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:8px 10px;
+}
 
-  .content-row{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:center;gap:10px}
+.panel{
+  width:900px;
+  max-width:100%;
+  background:#fff;
+  border:2px solid #aaa;
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  flex-direction:row;      /* ✅ 電腦：圖左字右 */
+  gap:10px;
+  align-items:stretch;
 
-  .panel{
-    width:900px;
-    height:420px;
-    background:#fff;
-    border:2px solid #aaa;
-    border-radius:10px;
-    padding:10px;
+  min-height:auto;         /* ✅ 電腦唔再頂到成塊咁長 */
+}
+
+/* 底部控制條固定喺畫面底，不會再被白色遮 */
+.controls{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:var(--controls-h);
+  background:#fafafa;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:6px 0 10px;
+}
+  .topbar{
     display:flex;
-    flex-direction:row;
-    gap:10px;
+    flex-wrap:wrap;
     align-items:center;
-    position:relative;          /* 為 page-counter 定位用 */
+    justify-content:center;
+    gap:10px;
+  }
+  .top-title{
+    font-weight:700;
+    font-size:18px;
+  }
+  #lessonSelect{
+    min-width:180px;
+    padding:4px 8px;
+    font-size:15px;
   }
 
-  /* 右下角句子進度 (第幾句/共幾句) */
-  .page-counter{
-    position:absolute;
-    right:10px;
-    bottom:8px;
-    font-size:12px;
-    color:#666;
-  }
 
-  .imgBox{height:100%;aspect-ratio:1/1;overflow:hidden;display:flex;align-items:center;justify-content:center}
+ 
+/* 共同設定（手機 + 電腦都用） */
+/* 電腦預設：正方形圖片 */
+.imgBox{
+  flex:0 0 auto;           /* 唔再用 40% 闊，改做固定方形 */
+  width:380px;
+  height:380px;            /* ✅ 圖片方形，決定晒黑框高度 */
+  max-height:380px;
+
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
   #pixCanvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
   #pageImg{display:none}
 
-  .textCol{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-  #sentenceWrap{width:100%;height:72%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .textCol{
+    flex:1;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start
+margin-top:6px; 
+  }
+#sentenceWrap{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden
+}
   #sentence{max-width:100%;text-align:center;line-height:1.18}
-  #translation{width:100%;height:22%;display:flex;align-items:center;justify-content:center;color:#333;font-size:22px;text-align:center;margin-top:8px}
+  #translation{
+    width:100%;
+    height:22%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#333;
+    font-size:18px;
+    text-align:center;
+    margin-top: 4px !important;
+  }
+
+  .page-counter{
+    align-self:flex-end;
+    font-size:14px;
+    color:#111;
+    margin-right:4px;
+  }
 
   /* 標點永遠黏住前一個字，不可獨立換行 */
   .punct {
-    display: inline-block;
-    white-space: nowrap;
-    color: #777;
-    margin-left: 2px;
-    margin-right: 0;
+    display:inline-block;
+    white-space:nowrap;
+    color:#777;
+    margin-left: 1px;
+  margin-right: 0;
   }
   .o-nest{
-    position: relative;
-    display: inline-block;
-    line-height: 1;
+    position:relative;
+    display:inline-block;
+    line-height:1;
   }
   .macron{
-    position: relative;
-    display: inline-block;
-    line-height: 1;
+    position:relative;
+    display:inline-block;
+    line-height:1;
   }
   .macron::after{
-    content: '';
-    position: absolute;
-    width: 60%;
-    left: 20%;
-    top: 0.1em;
-    height: 0.05em;
-    background: currentColor;
-    border-radius: 1px;
-    pointer-events: none;
+    content:'';
+    position:absolute;
+    width:60%;
+    left:20%;
+    top:0.1em;
+    height:0.05em;
+    background:currentColor;
+    border-radius:1px;
+    pointer-events:none;
   }
   .word > *{ white-space:nowrap; }
-
+.word{
+  margin: 0 4px;     /* 原本 6px → 4px，英文之間更貼身 */
+}
   .o-nest::after{
-    content: 'o';
-    position: absolute;
-    left: 0; right: 0;
-    top: 50%;
-    transform: translateY(-20%);
-    font-size: 0.36em;
-    line-height: 1;
-    opacity: .85;
-    pointer-events: none;
+    content:'o';
+    position:absolute;
+    left:0; right:0;
+    top:50%;
+    transform:translateY(-20%);
+    font-size:0.36em;
+    line-height:1;
+    opacity:.85;
+    pointer-events:none;
   }
   .word{
     margin:0 6px;
@@ -121,17 +204,6 @@
   }
 
   /* ===== 底部控制區 ===== */
-  .controls{
-    grid-column:2;
-    grid-row:2;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    margin-top:-4px;
-    min-height:80px;        /* 固定高度，避免上面 panel 被推上推落 */
-  }
   .btn-row{
     display:flex;
     align-items:center;
@@ -139,16 +211,15 @@
     gap:0;
   }
 
-  /* 三個文字按鈕 PREVIOUS | START | NEXT */
   .nav-btn{
     background:none;
     border:none;
     font-size:16px;
-    font-weight:400;        /* 不要粗體 */
+    font-weight:400;
     color:#111;
     padding:6px 12px;
     cursor:pointer;
-    width:100px;            /* 固定寬度，START → STOP 時唔推郁其他 */
+    width:100px;
     text-align:center;
   }
   .nav-btn:disabled{
@@ -163,21 +234,19 @@
   }
 
   /* 錄音指示器 icons */
-  .record-indicator{
-    height:40px;                 /* 固定高度，icon 出現/消失唔會推郁上面 */
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transform:translateY(-30px); /* 整組升高啲，介乎 panel 同按鈕之間 */
-  }
-
+.record-indicator{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:34px;      /* 預留位比紅圈 / 黃圈 / 綠 tick */
+  margin-bottom:8px;/* 錄音圈 ↔ PREVIOUS/START/NEXT 嘅距離 */
+}
   .rec-icon{
     width:22px;
     height:22px;
-    display:none;                /* 只顯示一個，其餘不佔位 */
+    display:none;
   }
 
-  /* 🔴 錄音中：中間實心紅點 + 外圍紅圈 (22x22) */
   .rec-record{
     position:relative;
     border-radius:50%;
@@ -192,11 +261,10 @@
     background:transparent;
   }
 
-  /* 🟡 分析中：黃 spinner，再大 40% (約 30x30) */
   .rec-spin{
     border-radius:50%;
     box-sizing:border-box;
-    border:3px solid #ddd;
+    border:3px solid:#ddd;
     border-top-color:#ffa000;
     animation:spin 0.7s linear infinite;
     width:30px;
@@ -206,7 +274,6 @@
     to{transform:rotate(360deg);}
   }
 
-  /* ✅ 完成：綠 tick，size 同黃圈一樣，勾粗少少 */
   .rec-done{
     position:relative;
     border-radius:50%;
@@ -226,33 +293,170 @@
     transform:rotate(40deg);
   }
 
-.fixed-logo{
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  width: 85px;              /* LOGO 大小可調整 */
-  opacity: 0.85;            /* 稍微透明，唔阻礙畫面 */
-  cursor: pointer;
-  z-index: 9999;            /* 永遠在最上層 */
-  transition: opacity 0.2s;
-}
-
-.fixed-logo:hover{
-  opacity: 1;
-}
-
-  .summary{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px;text-align:center}
+  .summary{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:10px;
+    text-align:center
+  }
   .summary h2{margin:6px 0 8px;font-size:28px}
   .summary .line{margin:4px 0;font-size:22px}
   .skipped{color:#c00;font-weight:700}
+
+  /* ===== 手機版：panel 自己捲，下面掣長期留喺畫面 ===== */
+/* 手機版調整 */
+@media (max-width: 768px){
+
+  /* 整個 app 係直向排列：上 lesson， 中 panel， 下固定按鈕 */
+   .app{
+    padding:8px;
+    gap:8px;
+  }
+
+  /* 🔝 Lesson 清單在最上面一行（代替左邊 sidebar） */
+  .sidebar{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    width:100%;
+    max-height:40px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:0 2px;
+  }
+
+  .lesson-title{
+    margin-right:8px;
+    font-size:14px;
+    white-space:nowrap;
+  }
+
+  .lesson-list{
+    display:flex;
+    flex-direction:row;
+    gap:4px;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+
+  .lesson-item{
+    display:inline-block;
+    white-space:nowrap;
+    padding:2px 6px;
+    font-size:13px;
+  }
+
+  /* 中間內容區：panel 喺畫面中間 */
+.content-row{
+    width:100%;
+    justify-content:center;
+    align-items:flex-start;  /* panel 黐近上面 */
+    margin-top:6px;
+  }
+
+.panel{
+    margin:6px auto 0;
+    width:100%;
+    max-width:100%;
+    flex-direction:column;
+    align-items:stretch;
+
+    /* 📏 電話上：黑框永遠固定高度，大約佔畫面 68% */
+    height:66vh;           /* 主高度 */
+    min-height:66vh;       /* 防止比內容拉長 */
+    max-height:66vh;       /* 防止再長 */
+
+    overflow-y:auto;       /* 字太多就喺黑框裏面捲 */
+  }
+
+ .imgBox{
+    width:100%;
+    height:auto;
+    max-height:38vh;         /* 圖片最多佔約4成高度 */
+  }
+  #sentenceWrap{
+    width:100%;
+    height:auto;
+    min-height:90px;
+  }
+  #sentence{
+    max-width:100%;
+    text-align:center;
+    line-height:1.00;
+  }
+
+  /* 底部按鈕：你之前已經 fixed bottom，呢度唔改佢，只係確保闊度 */
+ .controls{
+    width:100%;
+    justify-content:center;
+    margin-top:3px;
+  }
+}
+/* =======================
+   💻 只限電腦版 Desktop
+   ======================= */
+@media (min-width: 769px) {
+
+  /* 圖左字右（如果你而家已經係咁，可以略過呢幾行） */
+  .content-row{
+    align-items:stretch;
+    padding:16px 40px;
+  }
+
+.panel {
+    max-width: 1400px;      /* 原 900px → 改 1400px 或你想要的數字 */
+    padding: 20px;
+    gap: 20px;
+    max-height: 428px;      /* 原 900px → 改 1400px 或你想要的數字 */
+
+  }
+ .imgBox {
+    flex: 0 0 42%;          /* 原 40% → 42%，圖片少少闊啲 */
+    max-height: 480px;      /* 原 420px → 480px，圖片高度增加 */
+  }
+ .textCol{
+    flex:1 1 auto;
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;   /* 句子 + 中文居中 */
+    align-items:flex-start;
+  }  /* 句子部份：容許最多 3 行，大大隻字 */
+ #sentenceWrap {
+    padding-left: 10px;     /* 原本左右空間太闊，縮細 */
+    padding-right: 10px;
+    width: 100%;
+  }
+ #sentence {
+    font-size: 70px !important;   /* 電腦字體大啲 */
+    line-height: 1.1;
+  }
+ #sentenceWrap{
+    flex:1 1 auto;
+    height:auto;              /* 用到成個 textCol 嘅高度 */
+    max-height:none;
+    padding:6px 0;            /* 少少上下空隙就夠 */
+  }
+
+  /* 中文：電腦大一倍，手機仍然用之前嗰個細 size */
+#translation {
+    font-size: 28px !important;   /* 電腦中文字大啲 */
+    margin-top: 12px;
+  }
+}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar">
-    <div class="lesson-title">Phonics Readers</div>
-    <div id="lessonList" class="lesson-list"></div>
-  </aside>
+  <header class="topbar">
+    <div class="top-title">Phonics Readers</div>
+    <select id="lessonSelect"></select>
+  </header>
 
   <div class="content-row">
     <div class="panel" id="panel">
@@ -284,9 +488,6 @@
   </div>
 </div>
 
-<a href="https://phonicsforest.wordpress.com/" target="_blank">
-  <img src="images/logo.png" class="fixed-logo" alt="Phonics Forest Logo">
-</a>
 <script src="data.js"></script>
 <script>
 /* ---------- 安全後備 ---------- */
@@ -295,7 +496,8 @@ window.wordVariants  = window.wordVariants || {};
 if (typeof window.LESSONS === 'undefined') { alert('未載入 data.js！'); window.LESSONS = {}; }
 
 /* ---------- DOM ---------- */
-const lessonListEl = document.getElementById('lessonList');
+const lessonSelectEl = document.getElementById('lessonSelect');
+
 let pixCanvas = document.getElementById('pixCanvas');
 let ctx       = pixCanvas.getContext('2d',{willReadFrequently:true});
 let sentenceDiv   = document.getElementById('sentence');
@@ -318,7 +520,7 @@ let pages = getPagesFromLessons(currentLesson);
 let pageIdx = 0;
 let words=[],spans=[],wordSpanIdx=[];
 let correctCount=0;
-let isRunning=false;        // true = 正在錄音
+let isRunning=false;
 let uiMode = 'idle';        // 'idle' | 'recording' | 'analyzing' | 'done'
 const pageStates=[];
 
@@ -326,9 +528,16 @@ const pageStates=[];
 let mediaRecorder = null;
 let audioChunks = [];
 const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
-const AUDIO_PATH = 'audio/';   // 特別字 mp3 放嘅資料夾
-let currentAudio = null;       // 用嚟記住而家播緊邊個 audio
+const AUDIO_PATH = 'audio/';
+let currentAudio = null;
 
+/* Web Speech (Browser) — 手機上禁用，避免出事 */
+const WebSR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const useWebSpeech = !!WebSR && !isMobile;
+
+let webRec = null;
+let webTranscript = "";
 
 /* ========== helpers ========== */
 function getPagesFromLessons(idx){
@@ -347,70 +556,136 @@ function resetLessonState(newPages){
 }
 
 function autoFitTwoLines(){
-  let size = 80;
+  if (!sentenceDiv || !sentenceWrap) return;
+
+  const text = sentenceDiv.textContent.trim();
+  const wordCount = text ? text.split(/\s+/).length : 0;
+
+  // 先揀一個起始字體大小（你可以按喜好再微調）
+  let size;
+  if (wordCount <= 3) {
+    size = 80;
+  } else if (wordCount <= 6) {
+    size = 72;
+  } else if (wordCount <= 10) {
+    size = 64;
+  } else {
+    size = 58;
+  }
+
+  const minSize = 26;
   sentenceDiv.style.fontSize = size + 'px';
+
   const maxH = sentenceWrap.clientHeight * 0.95;
-  while ((sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > sentenceWrap.clientWidth) && size > 26) {
+  const maxW = sentenceWrap.clientWidth * 0.98;
+  const isDesktop = window.innerWidth >= 769;
+  const MAX_LINES = 3;      // ✅ 電腦最多 3 行
+
+  function getLineCount() {
+    const style = window.getComputedStyle(sentenceDiv);
+    const fs = parseFloat(style.fontSize) || size;
+    const lh = parseFloat(style.lineHeight) || fs * 1.18;
+    return sentenceDiv.scrollHeight / lh;
+  }
+
+  let lines = getLineCount();
+
+  // 電腦：闊度 / 高度 / 行數 任何一樣超出就縮細
+  // 手機：保持之前邏輯，只睇高闊度（唔動你而家 OK 嘅效果）
+  while (
+    size > minSize &&
+    (
+      sentenceDiv.scrollHeight > maxH ||
+      sentenceDiv.scrollWidth > maxW ||
+      (isDesktop && lines > MAX_LINES)
+    )
+  ){
     size -= 2;
     sentenceDiv.style.fontSize = size + 'px';
+    lines = getLineCount();
+  }
+
+  // 中文保持你原本嘅算法（手機而家 OK，唔郁佢）
+  if (translationEl) {
+    const cnSize = Math.max(18, Math.round(size * 0.55));
+    translationEl.style.fontSize = cnSize + 'px';
   }
 }
-window.addEventListener('resize', autoFitTwoLines);
 
-/* ========== 課本清單 ========== */
-function renderLessonList(){
-  lessonListEl.innerHTML = '';
+function ensureControlsVisible(){
+  // 手機上確保控制區喺畫面內，減少用戶自己捲到上上落落
+  if (window.innerWidth <= 768){
+    const controls = document.querySelector('.controls');
+    if (controls){
+      controls.scrollIntoView({block:'end', behavior:'auto'});
+    }
+  }
+}
+
+window.addEventListener('resize', ()=>{
+  const st=pageStates[pageIdx];
+  const prog=st?.finished?1:((st?.correct?.size||0)/Math.max(1,words.length));
+  drawPixelate(prog);
+  autoFitTwoLines();
+});
+
+/* ========== 頂部 Lesson 下拉選單 ========== */
+function renderLessonSelect(){
+  lessonSelectEl.innerHTML = '';
   const keys = Object.keys(LESSONS).map(n=>+n).filter(n=>!isNaN(n));
   const maxIdx = keys.length ? Math.max(...keys) : 1;
 
   for (let i=1;i<=maxIdx;i++){
     const has = !!LESSONS[i];
-    const item = document.createElement('div');
-    item.className = 'lesson-item';
-    if (i===currentLesson) item.classList.add('active');
-    if (!has) item.classList.add('disabled');
-
-    const title = has && !Array.isArray(LESSONS[i]) && LESSONS[i].title ? LESSONS[i].title : ('Lesson ' + i);
-    item.textContent = title;
-
-    item.onclick = () => {
-      if (!LESSONS[i]) { alert('Lesson ' + i + ' 未設定內容'); return; }
-
-      const panel = document.getElementById('panel');
-      if (!panel.querySelector('#sentenceWrap')) {
-        panel.innerHTML = `
-          <div class="imgBox">
-            <canvas id="pixCanvas"></canvas>
-            <img id="pageImg" alt="">
-          </div>
-          <div class="textCol">
-            <div id="sentenceWrap"><div id="sentence"></div></div>
-            <div id="translation"></div>
-          </div>
-          <div id="pageCounter" class="page-counter"></div>`;
-        pixCanvas    = document.getElementById('pixCanvas');
-        ctx          = pixCanvas.getContext('2d',{willReadFrequently:true});
-        sentenceDiv  = document.getElementById('sentence');
-        translationEl= document.getElementById('translation');
-        sentenceWrap = document.getElementById('sentenceWrap');
-        pageCounterEl= document.getElementById('pageCounter');
-      }
-
-      document.querySelector('.controls').style.display = 'flex';
-
-      currentLesson = i;
-      pages = getPagesFromLessons(i);
-      resetLessonState(pages);
-      renderLessonList();
-      showRecordingUI('idle');
-      renderPageFromState();
-      updateButtons();
-    };
-
-    lessonListEl.appendChild(item);
+    if (!has) continue;
+    const opt = document.createElement('option');
+    opt.value = i;
+    const title = !Array.isArray(LESSONS[i]) && LESSONS[i].title ? LESSONS[i].title : ('Lesson ' + i);
+    opt.textContent = title;
+    if (i===currentLesson) opt.selected = true;
+    lessonSelectEl.appendChild(opt);
   }
+
+  lessonSelectEl.onchange = () => {
+    const val = parseInt(lessonSelectEl.value,10);
+    if (!LESSONS[val]) { alert('Lesson ' + val + ' 未設定內容'); return; }
+
+    const panel = document.getElementById('panel');
+    if (!panel.querySelector('#sentenceWrap')) {
+      panel.innerHTML = `
+        <div class="imgBox">
+          <canvas id="pixCanvas"></canvas>
+          <img id="pageImg" alt="">
+        </div>
+        <div class="textCol">
+          <div id="sentenceWrap"><div id="sentence"></div></div>
+          <div id="translation"></div>
+        </div>
+        <div id="pageCounter" class="page-counter"></div>
+      `;
+      pixCanvas    = document.getElementById('pixCanvas');
+      ctx          = pixCanvas.getContext('2d',{willReadFrequently:true});
+      sentenceDiv  = document.getElementById('sentence');
+      translationEl= document.getElementById('translation');
+      sentenceWrap = document.getElementById('sentenceWrap');
+      pageCounterEl= document.getElementById('pageCounter');
+    }
+
+    const controls = document.querySelector('.controls');
+    if (controls) controls.style.display = 'flex';
+
+    stopWebSpeech();
+    webTranscript = "";
+    stopRecording();
+    audioChunks = [];
+    showRecordingUI('idle');
+
+    currentLesson = val;
+    pages = getPagesFromLessons(val);
+    resetLessonState(pages);
+    renderPageFromState();
+  };
 }
-renderLessonList();
 
 /* ========== Pixelate 圖片 ========== */
 const sourceImg = new Image();
@@ -431,7 +706,7 @@ function drawPixelate(progress){
 }
 function setProgress(p){ drawPixelate(Math.max(0,Math.min(1,p))); }
 
-/* ========== 渲染頁面（含標點與 | 虛線） ========== */
+/* ========== 渲染頁面 ========== */
 
 function renderPageFromState(){
   try{
@@ -441,8 +716,6 @@ function renderPageFromState(){
       if (pageCounterEl) pageCounterEl.textContent = '';
       return;
     }
-
-    document.querySelector('.controls').style.display = 'flex';
 
     const p = pages[pageIdx] || {};
     if (p.image) sourceImg.src = p.image;
@@ -586,7 +859,6 @@ function renderPageFromState(){
       translationEl.textContent = '';
     }
 
-    // 更新句子計數  (例如 2/5)
     if (pageCounterEl){
       if (pages && pages.length){
         pageCounterEl.textContent = (pageIdx + 1) + '/' + pages.length;
@@ -597,6 +869,7 @@ function renderPageFromState(){
 
     autoFitTwoLines();
     updateButtons();
+    ensureControlsVisible();
 
   } catch (e) {
     console.error('[renderPageFromState]', e);
@@ -617,7 +890,6 @@ function saveState(finished=false){
 function showRecordingUI(mode){
   uiMode = mode;
 
-  // 只顯示一個 icon，其餘 display:none
   iconRecord.style.display = 'none';
   iconSpin.style.display   = 'none';
   iconDone.style.display   = 'none';
@@ -638,21 +910,20 @@ function showRecordingUI(mode){
     iconDone.style.display = 'block';
     startBtn.textContent = 'START';
 
-    // 綠 tick 出現後 1.5 秒，先再 enable 所有按鈕
     startBtn.disabled = true;
     prevBtn.disabled  = true;
     nextBtn.disabled  = true;
     isRunning = false;
 
     setTimeout(() => {
-      uiMode = 'idle';                 // 回到空閒狀態
+      uiMode = 'idle';
       iconRecord.style.display = 'none';
       iconSpin.style.display   = 'none';
       iconDone.style.display   = 'none';
 
       startBtn.textContent = 'START';
       startBtn.disabled = false;
-      updateButtons();                 // 用 pageIdx 決定 PREVIOUS / NEXT 是否可按
+      updateButtons();
     }, 1500);
 
   } else { // idle
@@ -667,7 +938,6 @@ function showRecordingUI(mode){
 function updateButtons(){
   const busy = (uiMode === 'recording' || uiMode === 'analyzing' || uiMode === 'done');
 
-  // NEXT / FINISH 文案
   if (pages && pages.length && pageIdx === pages.length - 1){
     nextBtn.textContent = 'FINISH';
   } else {
@@ -683,47 +953,108 @@ function updateButtons(){
   }
 }
 
-/* ---------- MediaRecorder 控制 ---------- */
+/* ---------- MediaRecorder / WebSpeech 控制 ---------- */
 function stopRecording(){
   if (mediaRecorder && mediaRecorder.state === "recording"){
     mediaRecorder.stop();
   }
 }
+function stopWebSpeech(){
+  if (webRec){
+    try{ webRec.stop(); }catch(e){}
+  }
+}
 
 startBtn.onclick = async () => {
+  if (startBtn.disabled) return;
+
   if (!isRunning) {
     // 開始錄音
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
+    if (useWebSpeech){
+      // --- Browser / Google path (只在電腦用) ---
+      webTranscript = "";
+      const SR = WebSR;
+      webRec = new SR();
+      webRec.lang = 'en-GB';
+      webRec.continuous = true;
+      webRec.interimResults = true;
 
-      mediaRecorder.ondataavailable = e => {
-        audioChunks.push(e.data);
+      webRec.onresult = (e) => {
+        const res = e.results[e.results.length-1];
+        if (res.isFinal){
+          webTranscript += " " + res[0].transcript;
+        }
+      };
+      webRec.onerror = (err) => {
+        console.error("WebSpeech error:", err);
+        showRecordingUI('idle');
+      };
+      webRec.onend = async () => {
+        if (uiMode === 'analyzing'){
+          await applyTranscript(webTranscript || "");
+        }
       };
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        stream.getTracks().forEach(t => t.stop());
-        showRecordingUI('analyzing');       // Stop 後分析中：全部 disable
-        await sendToWhisper(audioBlob);
-      };
+      try{
+        webRec.start();
+        showRecordingUI('recording');
+      }catch(err){
+        console.error("WebSpeech start fail, fallback Whisper:", err);
+        await startWhisperRecording();
+      }
 
-      mediaRecorder.start();
-      showRecordingUI('recording');         // 紅圈，Prev/Next disable，Stop 可按
-
-    } catch (err) {
-      console.error("Mic error:", err);
-      alert("Cannot access microphone.");
+    } else {
+      // 手機：直接用 Whisper
+      await startWhisperRecording();
     }
+
   } else {
-    // Stop
-    stopRecording();
+    // STOP
+    if (useWebSpeech && webRec){
+      showRecordingUI('analyzing');
+      stopWebSpeech();
+    } else {
+      stopRecording();
+    }
   }
 };
 
+async function startWhisperRecording(){
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = e => {
+      audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+      stream.getTracks().forEach(t => t.stop());
+      showRecordingUI('analyzing');
+      await sendToWhisper(audioBlob);
+    };
+
+    mediaRecorder.start();
+    showRecordingUI('recording');
+
+  } catch (err) {
+    console.error("Mic error:", err);
+    alert("Cannot access microphone.");
+    showRecordingUI('idle');
+  }
+}
+
+/* ---------- 按鈕換頁 ---------- */
 prevBtn.onclick = () => {
-  if (uiMode==='recording' || uiMode==='analyzing' || uiMode==='done') return;
+  if (prevBtn.disabled) return;
+  stopWebSpeech();
+  webTranscript = "";
+  stopRecording();
+  audioChunks = [];
+  showRecordingUI('idle');
+
   if (pageIdx>0){
     saveState(pageStates[pageIdx]?.finished || false);
     pageIdx--;
@@ -731,7 +1062,13 @@ prevBtn.onclick = () => {
   }
 };
 nextBtn.onclick = () => {
-  if (uiMode==='recording' || uiMode==='analyzing' || uiMode==='done') return;
+  if (nextBtn.disabled) return;
+  stopWebSpeech();
+  webTranscript = "";
+  stopRecording();
+  audioChunks = [];
+  showRecordingUI('idle');
+
   saveState(pageStates[pageIdx]?.finished || false);
   if (pageIdx < pages.length-1){
     pageIdx++;
@@ -741,7 +1078,37 @@ nextBtn.onclick = () => {
   }
 };
 
-/* ---------- Whisper 分析，只標「未啱」嘅字 ---------- */
+/* ---------- Transcript → 標記字 ---------- */
+async function applyTranscript(spokenRaw){
+  const spoken = (spokenRaw || "").toLowerCase();
+  const tokens = spoken.split(/\W+/).filter(Boolean);
+  const set = new Set(tokens);
+
+  for (let i = 0; i < words.length; i++){
+    const span = spans[wordSpanIdx[i]];
+    if (!span || span.classList.contains('correct')) continue;
+
+    const tgt = words[i].toLowerCase();
+    const variants = (wordVariants[tgt] || [tgt]);
+    const matched = variants.some(v => set.has(v.toLowerCase()));
+    if (matched) {
+      span.classList.add('correct');
+    }
+  }
+
+  saveState(isPageDone());
+  const st = pageStates[pageIdx];
+  correctCount = st.correct.size;
+  setProgress(correctCount / Math.max(1, words.length));
+
+  if (isPageDone()){
+    finishSentence();
+  }
+
+  showRecordingUI('done');
+}
+
+/* ---------- Whisper 分析 ---------- */
 async function sendToWhisper(audioBlob){
   if (!words.length) { showRecordingUI('done'); return; }
 
@@ -764,33 +1131,8 @@ async function sendToWhisper(audioBlob){
     const data = await res.json();
     console.log("Whisper result:", data);
 
-    const spoken = (data.said_clean || data.transcript || "").toLowerCase();
-    const tokens = spoken.split(/\W+/).filter(Boolean);
-    const set = new Set(tokens);
-
-    // 只處理「未啱」嘅 words，學生可以淨係補讀 I / a / fat
-    for (let i = 0; i < words.length; i++){
-      const span = spans[wordSpanIdx[i]];
-      if (!span || span.classList.contains('correct')) continue;
-
-      const tgt = words[i].toLowerCase();
-      const variants = (wordVariants[tgt] || [tgt]);
-      const matched = variants.some(v => set.has(v.toLowerCase()));
-      if (matched) {
-        span.classList.add('correct');
-      }
-    }
-
-    saveState(isPageDone());
-    const st = pageStates[pageIdx];
-    correctCount = st.correct.size;
-    setProgress(correctCount / Math.max(1, words.length));
-
-    if (isPageDone()){
-      finishSentence();
-    }
-
-    showRecordingUI('done');
+    const spoken = (data.said_clean || data.transcript || "");
+    await applyTranscript(spoken);
 
   } catch(err){
     console.error("Whisper API error:", err);
@@ -809,9 +1151,11 @@ function finishSentence(){
   saveState(true);
 }
 
-/* ---------- Finish Summary：未讀對嘅字變紅 ---------- */
+/* ---------- Finish Summary ---------- */
 function showSummary(){
-  document.querySelector('.controls').style.display='none';
+  const controls = document.querySelector('.controls');
+  if (controls) controls.style.display = 'none';
+
   const panel = document.getElementById('panel');
   panel.innerHTML = '<div class="summary"><h2>Finish</h2></div>';
   const wrap = panel.querySelector('.summary');
@@ -856,12 +1200,11 @@ function showSummary(){
   });
 }
 
+/* ---------- Special word 播 mp3 ---------- */
 function speakWord(w){
-  // 1. 準備檔名：全部轉細階，移除非英數字元（例如 ' / , . 等）
   const cleanKey = w.toLowerCase().replace(/[^a-z0-9]/g, '');
   const src = AUDIO_PATH + cleanKey + '.mp3';
 
-  // 2. 如果之前有 audio 播緊，先停咗佢
   if (currentAudio){
     try{
       currentAudio.pause();
@@ -869,11 +1212,9 @@ function speakWord(w){
     }catch(e){}
   }
 
-  // 3. 建立新 audio 播放
   const audio = new Audio(src);
   currentAudio = audio;
 
-  // 4. 如果 mp3 播放失敗（例如檔案唔存在），fallback 用舊有 TTS
   audio.onerror = () => {
     console.warn('Audio not found for special word:', src, 'fallback to TTS');
     const u = new SpeechSynthesisUtterance(w);
@@ -883,7 +1224,6 @@ function speakWord(w){
 
   audio.play().catch(err => {
     console.error('Audio play error:', err);
-    // 播唔到都可以 fallback
     const u = new SpeechSynthesisUtterance(w);
     u.lang = 'en-GB';
     speechSynthesis.speak(u);
@@ -892,16 +1232,9 @@ function speakWord(w){
 
 /* ---------- 初始化 ---------- */
 resetLessonState(pages);
+renderLessonSelect();
 renderPageFromState();
 showRecordingUI('idle');
-
-/* 視窗改變重畫 */
-window.addEventListener('resize', ()=>{
-  const st=pageStates[pageIdx];
-  const prog=st?.finished?1:((st?.correct?.size||0)/Math.max(1,words.length));
-  drawPixelate(prog);
-  autoFitTwoLines();
-});
 </script>
 </body>
 </html>
