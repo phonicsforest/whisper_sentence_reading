@@ -404,31 +404,31 @@ margin-top:6px;
   }
 
   .panel{
-    flex-direction:row;       /* 圖片 + 文字 橫向排 */
-    align-items:stretch;
-    height:70vh;              /* 黑框高度，大約 70% 螢幕，你可以改 68 / 72 */
-    min-height:0;
+    flex-direction: row;        /* 圖左字右 */
+    align-items: center;        /* 圖同文字垂直居中，唔會拉到好長 */
+    max-height: 460px;          /* 黑框高度 ≈ 圖高度 + padding，可自己微調 440~480 */
   }
-
-@media (min-width: 769px) {
-  .imgBox{
-    flex: 0 0 50%;      /* 左邊圖佔 40% 闊 */
-    max-height: 420px;  /* 圖片最高 420px，可自己微調 */
+.imgBox{
+    flex: 0 0 360px;            /* 左邊固定闊度 */
+    max-width: 360px;
+    height: 360px;              /* ✅ 強制正方形 */
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-}
-  .textCol{
-    flex:1;
-    height:100%;
-    padding-left:40px;
-    justify-content:center;   /* 句子＋中文垂直居中 */
+.textCol{
+    flex: 1;
+    height: 360px;              /* 同圖片一樣高 */
+    display:flex;
+    flex-direction:column;
+    justify-content:center;     /* 句子 / 中文垂直居中 */
   }
-
   /* 句子部份：容許最多 3 行，大大隻字 */
-  #sentenceWrap{
-    height:auto;
-    max-height:none;
+ #sentenceWrap{
+    height: 60%;                /* 上面英文大約佔 6 成高度 */
   }
-
   #sentence{
     font-size:70px !important;  /* 起始字體大啲，autoFit 再幫你縮 */
     line-height:1.25;
@@ -437,9 +437,8 @@ margin-top:6px;
   }
 
   /* 中文：電腦大一倍，手機仍然用之前嗰個細 size */
-  #translation{
-    font-size:30px !important;  /* 視乎你喜歡，可 36 / 42 都得 */
-    line-height:1.3;
+ #translation{
+    height: 40%;                /* 下面中文 4 成高度 */
   }
 }
 
@@ -552,39 +551,58 @@ function resetLessonState(newPages){
 function autoFitTwoLines(){
   if (!sentenceDiv || !sentenceWrap) return;
 
-  // 先估下有幾多字
   const text = sentenceDiv.textContent.trim();
   const wordCount = text ? text.split(/\s+/).length : 0;
 
-  // 根據字數揀一個「起始字體」
-  // 句子短 → 大字；句子長 → 細啲
+  // 先揀一個起始字體大小（你可以按喜好再微調）
   let size;
   if (wordCount <= 3) {
-    size = 70;        // 好短句：I can. 之類
+    size = 80;
   } else if (wordCount <= 6) {
-    size = 65;        // 中等長度
+    size = 72;
   } else if (wordCount <= 10) {
-    size = 60;        // 再長少少
+    size = 64;
   } else {
-    size = 55;        // 好長句
+    size = 58;
   }
 
-  const minSize = 36;
-
+  const minSize = 26;
   sentenceDiv.style.fontSize = size + 'px';
 
-  // 最大高度係句子區嘅 95%
   const maxH = sentenceWrap.clientHeight * 0.95;
   const maxW = sentenceWrap.clientWidth * 0.98;
+  const isDesktop = window.innerWidth >= 769;
+  const MAX_LINES = 3;      // ✅ 電腦最多 3 行
 
-  // 如果仲塞唔落，就慢慢－2px 直到啱位
-  while (size > minSize &&
-        (sentenceDiv.scrollHeight > maxH || sentenceDiv.scrollWidth > maxW)) {
-    size -= 2;
-    sentenceDiv.style.fontSize = size + 'px';
+  function getLineCount() {
+    const style = window.getComputedStyle(sentenceDiv);
+    const fs = parseFloat(style.fontSize) || size;
+    const lh = parseFloat(style.lineHeight) || fs * 1.18;
+    return sentenceDiv.scrollHeight / lh;
   }
 
+  let lines = getLineCount();
 
+  // 電腦：闊度 / 高度 / 行數 任何一樣超出就縮細
+  // 手機：保持之前邏輯，只睇高闊度（唔動你而家 OK 嘅效果）
+  while (
+    size > minSize &&
+    (
+      sentenceDiv.scrollHeight > maxH ||
+      sentenceDiv.scrollWidth > maxW ||
+      (isDesktop && lines > MAX_LINES)
+    )
+  ){
+    size -= 2;
+    sentenceDiv.style.fontSize = size + 'px';
+    lines = getLineCount();
+  }
+
+  // 中文保持你原本嘅算法（手機而家 OK，唔郁佢）
+  if (translationEl) {
+    const cnSize = Math.max(18, Math.round(size * 0.55));
+    translationEl.style.fontSize = cnSize + 'px';
+  }
 }
 
 function ensureControlsVisible(){
