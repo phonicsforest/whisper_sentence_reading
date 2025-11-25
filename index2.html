@@ -89,13 +89,12 @@ html, body{
 
 
  
-.imgBox{
-  flex:0 0 40%;          /* 左邊大約 40% 闊 */
-  max-height:420px;      /* ✅ 圖片唔會再太高，可以自己微調 380~450 */
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* 共同設定（手機 + 電腦都用） */
+.imgBox {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
   #pixCanvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
   #pageImg{display:none}
@@ -369,6 +368,7 @@ margin-top:6px;
 
     overflow-y:auto;       /* 字太多就喺黑框裏面捲 */
   }
+
  .imgBox{
     width:100%;
     height:auto;
@@ -392,12 +392,63 @@ margin-top:6px;
     margin-top:3px;
   }
 }
+/* =======================
+   💻 只限電腦版 Desktop
+   ======================= */
+@media (min-width: 769px) {
+
+  /* 圖左字右（如果你而家已經係咁，可以略過呢幾行） */
+  .content-row{
+    align-items:stretch;
+    padding:16px 40px;
+  }
+
+  .panel{
+    flex-direction:row;       /* 圖片 + 文字 橫向排 */
+    align-items:stretch;
+    height:70vh;              /* 黑框高度，大約 70% 螢幕，你可以改 68 / 72 */
+    min-height:0;
+  }
+
+@media (min-width: 769px) {
+  .imgBox{
+    flex: 0 0 40%;      /* 左邊圖佔 40% 闊 */
+    max-height: 420px;  /* 圖片最高 420px，可自己微調 */
+  }
+}
+  .textCol{
+    flex:1;
+    height:100%;
+    padding-left:40px;
+    justify-content:center;   /* 句子＋中文垂直居中 */
+  }
+
+  /* 句子部份：容許最多 3 行，大大隻字 */
+  #sentenceWrap{
+    height:auto;
+    max-height:none;
+  }
+
+  #sentence{
+    font-size:70px !important;  /* 起始字體大啲，autoFit 再幫你縮 */
+    line-height:1.25;
+    max-width:90%;
+    margin:0 auto;
+  }
+
+  /* 中文：電腦大一倍，手機仍然用之前嗰個細 size */
+  #translation{
+    font-size:30px !important;  /* 視乎你喜歡，可 36 / 42 都得 */
+    line-height:1.3;
+  }
+}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">reader000</div>
+    <div class="top-title">readeraa0</div>
     <select id="lessonSelect"></select>
   </header>
 
