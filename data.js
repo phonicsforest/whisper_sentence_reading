@@ -870,7 +870,7 @@ LESSONS[60] = {
 LESSONS[61] = {
   title: "Lesson 35-1",
   pages: [
-  { text:"The tur|tle and snail are go|ing ve|ry sl*ow|ly in a jun|gle.", image:"images/book69_1.png", cn:"烏龜和蝸牛在叢林裡慢慢前行。" },
+  { text:"The tur|tle and snail walk ve|ry sl*ow|ly in a jun|gle.", image:"images/book69_1.png", cn:"烏龜和蝸牛在叢林裡慢慢前行。" },
   { text:"The car is coming out of the tun|nel to a tem|ple.", image:"images/book69_2.png", cn:"汽車從隧道開出到一座寺廟。" },
   { text:"He can make such a big bub|ble!", image:"images/book70_4.png", cn:"他可以吹出那麼大的泡泡！" },
   { text:"He is sh*ow|ing you the mo|del he made.", image:"images/book69_3.png", cn:"他正在展示他做的模型。" },
@@ -1074,4 +1074,5 @@ LESSONS[77] = {
     { text:"The dentist is holding a m-olar.", image:"images/book81_3.png", cn:"牙醫拿著一顆臼齒。" },
     { text:"The boat has a very big m-otor.", image:"images/book81_6.png", cn:"那艘船有很大的引擎。" }
   ]
+
 };
