@@ -1112,6 +1112,8 @@ async function applyTranscript(spokenRaw){
 async function sendToWhisper(audioBlob){
   if (!words.length) { showRecordingUI('done'); return; }
 
+showRecordingUI('analyzing');
+
   const formData = new FormData();
   formData.append("audio", audioBlob, "audio.webm");
   formData.append("target_sentence", pages[pageIdx].text || "");
