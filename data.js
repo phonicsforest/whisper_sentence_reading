@@ -157,7 +157,6 @@ window.LESSONS[1] = {
   title: "Lesson 7-1",
   pages: [
     { text:"I can fill it.", image:"images/book1_1.png", cn:"我可以把它裝滿。" },
-    { text:"Tom is a vet.", image:"images/book3_1.png", cn:"Tom是一名獸醫。" },
     { text:"I can sip it.", image:"images/book1_4.png", cn:"我可以啜一口。" },
     { text:"I can hit it.", image:"images/book1_5.png", cn:"我可以打它。" },
     { text:"I bit it.", image:"images/book1_6.png", cn:"我咬了它。" }
