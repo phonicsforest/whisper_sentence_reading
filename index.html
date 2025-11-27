@@ -9,7 +9,7 @@
 :root{
   /* 大約係上面標題 + lesson 下拉的高度 */
   --header-h: 56px;
-  /* 下面 PREVIOUS | START | NEXT + 錄音圈 個高度 */
+  /* 下面 PREVIOUS | START | NEXTa + 錄音圈 個高度 */
   --controls-h: 120px;
 }
 
@@ -105,15 +105,15 @@ html, body{
   #pixCanvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
   #pageImg{display:none}
 
-  .textCol{
-    flex:1;
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start
-margin-top:6px; 
-  }
+.textCol{
+  flex:1;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:6px;
+}
 #sentenceWrap{
   width:100%;
   display:flex;
@@ -235,64 +235,61 @@ margin-top:6px;
 
   /* 錄音指示器 icons */
 .record-indicator{
+  height:40px;
   display:flex;
   align-items:center;
   justify-content:center;
-  height:34px;      /* 預留位比紅圈 / 黃圈 / 綠 tick */
-  margin-bottom:8px;/* 錄音圈 ↔ PREVIOUS/START/NEXT 嘅距離 */
+  transform:translateY(-30px);
 }
-  .rec-icon{
-    width:22px;
-    height:22px;
-    display:none;
-  }
 
-  .rec-record{
-    position:relative;
-    border-radius:50%;
-    background:#e53935;
-  }
-  .rec-record::after{
-    content:'';
-    position:absolute;
-    inset:-3px;
-    border-radius:50%;
-    border:2px solid #e53935;
-    background:transparent;
-  }
-
-  .rec-spin{
-    border-radius:50%;
-    box-sizing:border-box;
-    border:3px solid:#ddd;
-    border-top-color:#ffa000;
-    animation:spin 0.7s linear infinite;
-    width:30px;
-    height:30px;
-  }
-  @keyframes spin{
-    to{transform:rotate(360deg);}
-  }
-
-  .rec-done{
-    position:relative;
-    border-radius:50%;
-    background:#43a047;
-    width:30px;
-    height:30px;
-  }
-  .rec-done::after{
-    content:'';
-    position:absolute;
-    left:8px;
-    top:5px;
-    width:10px;
-    height:14px;
-    border-right:3px solid #fff;
-    border-bottom:3px solid #fff;
-    transform:rotate(40deg);
-  }
-
+.rec-icon{
+  width:22px;
+  height:22px;
+  display:none;
+}
+.rec-record{
+  position:relative;
+  border-radius:50%;
+  background:#e53935;
+}
+.rec-record::after{
+  content:'';
+  position:absolute;
+  inset:-3px;
+  border-radius:50%;
+  border:2px solid #e53935;
+  background:transparent;
+}
+.rec-spin{
+  border-radius:50%;
+  box-sizing:border-box;
+  border:3px solid:#ddd;
+  border-top-color:#ffa000;
+  animation:spin 0.7s linear infinite;
+  width:30px;
+  height:30px;
+}
+@keyframes spin{
+  to{transform:rotate(360deg);}
+}
+.rec-done{
+  position:relative;
+  border-radius:50%;
+  background:#43a047;
+  width:30px;
+  height:30px;
+}
+.rec-done::after{
+  content:'';
+  position:absolute;
+  left:8px;
+  top:5px;
+  width:10px;
+  height:14px;
+  border-right:3px solid #fff;
+  border-bottom:3px solid #fff;
+  transform:rotate(40deg);
+}
   .summary{
     width:100%;
     height:100%;
@@ -472,20 +469,21 @@ margin-top:6px;
     </div>
   </div>
 
-  <div class="controls">
-    <div class="record-indicator">
-      <div id="iconRecord" class="rec-icon rec-record"></div>
-      <div id="iconSpin"   class="rec-icon rec-spin"></div>
-      <div id="iconDone"   class="rec-icon rec-done"></div>
-    </div>
-    <div class="btn-row">
-      <button id="prevBtn"  class="nav-btn">PREVIOUS</button>
-      <span   class="btn-sep">|</span>
-      <button id="startBtn" class="nav-btn">START</button>
-      <span   class="btn-sep">|</span>
-      <button id="nextBtn"  class="nav-btn">NEXT</button>
-    </div>
+<div class="controls">
+  <div class="record-indicator">
+    <div id="iconRecord" class="rec-icon rec-record"></div>
+    <div id="iconSpin"   class="rec-icon rec-spin"></div>
+    <div id="iconDone"   class="rec-icon rec-done"></div>
   </div>
+
+ <div class="btn-row">
+    <button id="prevBtn"  class="nav-btn">PREVIOUS</button>
+    <span   class="btn-sep">|</span>
+    <button id="startBtn" class="nav-btn">START</button>
+    <span   class="btn-sep">|</span>
+    <button id="nextBtn"  class="nav-btn">NEXT</button>
+  </div>
+</div>
 </div>
 
 <script src="data.js"></script>
@@ -890,6 +888,7 @@ function saveState(finished=false){
 function showRecordingUI(mode){
   uiMode = mode;
 
+  // 只顯示一個 icon，其餘 display:none
   iconRecord.style.display = 'none';
   iconSpin.style.display   = 'none';
   iconDone.style.display   = 'none';
@@ -903,13 +902,14 @@ function showRecordingUI(mode){
   } else if (mode === 'analyzing'){
     iconSpin.style.display = 'block';
     startBtn.textContent = 'STOP';
-    startBtn.disabled = true;
+    startBtn.disabled = true;   // 分析中唔比再撳
     isRunning = false;
 
   } else if (mode === 'done'){
     iconDone.style.display = 'block';
     startBtn.textContent = 'START';
 
+    // 綠 tick 顯示 1.5 秒，之後先恢復按掣
     startBtn.disabled = true;
     prevBtn.disabled  = true;
     nextBtn.disabled  = true;
