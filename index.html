@@ -380,6 +380,10 @@ html, body{
     height:auto;
     min-height:90px;
   }
+.syllable-split {
+    border-left: 2px solid #555 !important;   /* 改做實線 */
+    border-image: none !important;            /* 停止虛線 pattern */
+  }
   #sentence{
     max-width:100%;
     text-align:center;
@@ -429,7 +433,7 @@ html, body{
     width: 100%;
   }
  #sentence {
-    font-size: 70px !important;   /* 電腦字體大啲 */
+    font-size: 55px !important;   /* 電腦字體大啲 */
     line-height: 1.1;
   }
  #sentenceWrap{
@@ -451,7 +455,7 @@ html, body{
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="top-title">Phonics Readers0</div>
+    <div class="top-title">Phonics Readers</div>
     <select id="lessonSelect"></select>
   </header>
 
@@ -888,7 +892,6 @@ function saveState(finished=false){
 function showRecordingUI(mode){
   uiMode = mode;
 
-  // 只顯示一個 icon，其餘 display:none
   iconRecord.style.display = 'none';
   iconSpin.style.display   = 'none';
   iconDone.style.display   = 'none';
@@ -902,14 +905,13 @@ function showRecordingUI(mode){
   } else if (mode === 'analyzing'){
     iconSpin.style.display = 'block';
     startBtn.textContent = 'STOP';
-    startBtn.disabled = true;   // 分析中唔比再撳
+    startBtn.disabled = true;
     isRunning = false;
 
   } else if (mode === 'done'){
     iconDone.style.display = 'block';
     startBtn.textContent = 'START';
 
-    // 綠 tick 顯示 1.5 秒，之後先恢復按掣
     startBtn.disabled = true;
     prevBtn.disabled  = true;
     nextBtn.disabled  = true;
