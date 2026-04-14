@@ -537,7 +537,7 @@ const pageStates=[];
 /* Whisper / MediaRecorder */
 let mediaRecorder = null;
 let audioChunks = [];
-const WHISPER_API_URL = "https://phonicsforest-phonics-whisper-backend.hf.space/transcribe_sentence";
+const WHISPER_API_URL = "https://blue-band-1483.imanhui.workers.dev";
 const AUDIO_PATH = 'audio/';
 let currentAudio = null;
 
@@ -1158,9 +1158,9 @@ async function sendToWhisper(audioBlob){
  if (uiMode !== 'analyzing'){
     showRecordingUI('analyzing');
   }
-  const formData = new FormData();
-  formData.append("audio", audioBlob, "audio.webm");
-  formData.append("target_sentence", pages[pageIdx].text || "");
+const formData = new FormData();
+formData.append("file", audioBlob, "audio.webm");
+formData.append("model", "gpt-4o-mini-transcribe");
 
   try {
     const res = await fetch(WHISPER_API_URL, {
@@ -1177,7 +1177,7 @@ async function sendToWhisper(audioBlob){
     const data = await res.json();
     console.log("Whisper result:", data);
 
-    const spoken = (data.said_clean || data.transcript || "");
+const spoken = data.text || "";
     await applyTranscript(spoken);
 
   } catch(err){
