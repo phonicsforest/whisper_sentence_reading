@@ -452,7 +452,7 @@ LESSONS[25] = {
 LESSONS[26] = {
   title: "Lesson 17-2",
   pages: [
-  { text:"The bird in is on a perch.",              image:"images/book29_6.png", cn:"那隻鳥停在棲木上。" },
+  { text:"The bird is on a perch.",              image:"images/book29_6.png", cn:"那隻鳥停在棲木上。" },
   { text:"Smith has curls.",                  image:"images/book29_4.png", cn:"Smith有一頭大卷髮。" },
   { text:"A birch is bur|ning.",                  image:"images/book34_1.png", cn:"一棵落葉松在燃燒。" },
   { text:"The girl is hurt.  I spot her cry.",        image:"images/book32_1.png",  cn:"女孩受傷了。我看見她在哭。" },
