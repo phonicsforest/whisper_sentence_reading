@@ -394,7 +394,7 @@ LESSONS[21] = {
   { text:"The man can beat the drum.",      image:"images/book24_2.png", cn:"那個男人會打鼓。" },
   { text:"That is a lot of glue !",           image:"images/book25_5.png", cn:"這可是真多膠水！" },
   { text:"That man is a chief.",            image:"images/book24_3.png", cn:"這個男人是一位首領。" },
-  { text:"I think that Spike wants to steal the snack.",  image:"images/book24_5.png", cn:"我想Spike想偷走點心。" },
+  { text:"I think that Spike plans to steal the snack.",  image:"images/book24_5.png", cn:"我想Spike想偷走點心。" },
   { text:"That man is not weak.",           image:"images/book24_6.png", cn:"這個男人不虛弱。" }
 ]
 };
