@@ -931,7 +931,9 @@ function showRecordingUI(mode){
   iconSpin.style.display   = 'none';
   iconDone.style.display   = 'none';
 
-  if (mode === 'recording'){
+  if (mode === 'preparing'){
+    iconSpin.style.display = 'block'; startBtn.textContent = 'WAIT'; startBtn.disabled = true; isRunning = false;
+  } else if (mode === 'recording'){
     iconRecord.style.display = 'block';
     startBtn.textContent = 'STOP';
     startBtn.disabled = false;
@@ -990,7 +992,7 @@ function showDoneWithMinSpin(){
 
 
 function updateButtons(){
-  const busy = (uiMode === 'recording' || uiMode === 'analyzing' || uiMode === 'done');
+  const busy = (uiMode === 'preparing' || uiMode === 'recording' || uiMode === 'analyzing' || uiMode === 'done');
 
   if (pages && pages.length && pageIdx === pages.length - 1){
     nextBtn.textContent = 'FINISH';
@@ -1340,6 +1342,94 @@ function speakWord(w){
     speechSynthesis.speak(u);
   });
 }
+
+/* ---------- Diagnostics v2 ---------- */
+const diagStyle = document.createElement('style');
+diagStyle.textContent = '#diagToggle{position:fixed;right:8px;top:8px;z-index:30;padding:8px} #diagBox{position:fixed;inset:52px 8px 130px;background:white;border:2px solid #2563eb;border-radius:8px;padding:12px;overflow:auto;z-index:29;font:14px/1.5 system-ui} #diagBox pre{white-space:pre-wrap;overflow-wrap:anywhere} #diagBox button{padding:8px;margin:4px} #recStatus{position:fixed;bottom:8px;left:8px;right:8px;text-align:center;font-size:14px;z-index:20;background:#fafafa} #diagBox audio{max-width:100%}';
+document.head.appendChild(diagStyle);
+const diagToggle = document.createElement('button'); diagToggle.id='diagToggle'; diagToggle.textContent='診斷 / 截圖'; document.body.appendChild(diagToggle);
+const diagBox = document.createElement('section'); diagBox.id='diagBox'; diagBox.hidden=true;
+diagBox.innerHTML='<h2>錄音診斷 v2</h2><p>可直接截圖傳俾老師；報告只留喺呢部機。錄音辨識仍會使用原有服務。</p><label>裝置型號（可自行補充） <input id="manualModel" placeholder="例如 iPhone 13 / Samsung A54"></label><p><button id="diagDownload">下載診斷文字</button><button id="diagImage">下載診斷圖片</button></p><pre id="diagText"></pre><audio id="diagPlayback" controls hidden></audio>';
+document.body.appendChild(diagBox);
+const recStatus=document.createElement('div'); recStatus.id='recStatus'; recStatus.setAttribute('role','status'); recStatus.setAttribute('aria-live','polite'); document.body.appendChild(recStatus);
+const diag={version:'2026-11-11-v2', session:Math.random().toString(36).slice(2,10), device:{ua:navigator.userAgent,platform:navigator.platform,model:'瀏覽器未提供；請手動補充',secure:window.isSecureContext,embedded:window.self!==window.top,mediaRecorder:typeof MediaRecorder,webSpeech:!!WebSR},events:[],attempt:null};
+let activeEngine='', readyTimer, finishTimer, activeStream=null, meterContext=null, meterFrame=0, playbackURL=null;
+function reportText(){return JSON.stringify({...diag,manualModel:document.getElementById('manualModel').value,online:navigator.onLine,visibility:document.visibilityState,screen:screen.width+'×'+screen.height,viewport:innerWidth+'×'+innerHeight},null,2);}
+function refreshDiag(){document.getElementById('diagText').textContent=reportText();}
+function logDiag(event,detail=''){diag.events.push({time:new Date().toISOString(),event,detail}); if(diag.events.length>70)diag.events.shift();refreshDiag();}
+function status(text){recStatus.textContent=text;refreshDiag();}
+function failure(code,message){clearTimeout(readyTimer);clearTimeout(finishTimer); if(diag.attempt)diag.attempt.error={code,message};logDiag(code,message);showRecordingUI('idle');status(message+'（打開「診斷 / 截圖」傳俾老師）');diagBox.hidden=false;}
+diagToggle.onclick=()=>{diagBox.hidden=!diagBox.hidden;refreshDiag();};
+function downloadDiag(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),10000);}
+document.getElementById('diagDownload').onclick=()=>downloadDiag(new Blob([reportText()],{type:'text/plain;charset=utf-8'}),'phonics-'+diag.session+'.txt');
+document.getElementById('diagImage').onclick=()=>{const lines=[];for(const line of reportText().split('\n')){for(let i=0;i<Math.max(1,line.length);i+=65)lines.push(line.slice(i,i+65));} const c=document.createElement('canvas');c.width=1100;c.height=80+lines.length*25;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,c.width,c.height);x.fillStyle='#111';x.font='18px monospace';x.fillText('Phonics 錄音診斷 / '+diag.session,20,30);lines.forEach((l,i)=>x.fillText(l,20,65+i*25));c.toBlob(b=>{if(b)downloadDiag(b,'phonics-'+diag.session+'.png');});};
+if(navigator.userAgentData?.getHighEntropyValues)navigator.userAgentData.getHighEntropyValues(['model','platform','platformVersion','fullVersionList']).then(v=>{diag.device.hints=v;if(v.model)diag.device.model=v.model;refreshDiag();}).catch(()=>{});
+if(navigator.permissions?.query)navigator.permissions.query({name:'microphone'}).then(p=>{diag.device.micPermission=p.state;p.onchange=()=>{diag.device.micPermission=p.state;logDiag('permission',p.state);};refreshDiag();}).catch(()=>{});
+window.addEventListener('offline',()=>logDiag('offline'));
+document.addEventListener('visibilitychange',()=>logDiag('visibility',document.visibilityState));
+window.addEventListener('error',e=>logDiag('page-error',e.message));
+window.addEventListener('unhandledrejection',e=>logDiag('promise-error',String(e.reason)));
+function releaseMic(){cancelAnimationFrame(meterFrame);if(meterContext){meterContext.close().catch(()=>{});meterContext=null;}if(activeStream){activeStream.getTracks().forEach(t=>t.stop());activeStream=null;}}
+function monitorMic(stream){
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  try{meterContext=new AC();const source=meterContext.createMediaStreamSource(stream),analyser=meterContext.createAnalyser();analyser.fftSize=1024;source.connect(analyser);const values=new Uint8Array(analyser.fftSize);meterContext.resume().catch(()=>{});
+  const tick=()=>{if(!meterContext)return;analyser.getByteTimeDomainData(values);let sum=0;for(const v of values)sum+=((v-128)/128)**2;const rms=Math.sqrt(sum/values.length);if(diag.attempt){diag.attempt.peakRMS=Math.max(diag.attempt.peakRMS||0,rms);diag.attempt.meterState=meterContext.state;}if(uiMode==='recording')recStatus.textContent='● 可以開始讀 / Recording — 收音 '+Math.round(rms*100)+'%（讀完按 STOP）';meterFrame=requestAnimationFrame(tick);};tick();}catch(e){logDiag('meter-unavailable',e.message);}
+}
+function markReady(){if(uiMode!=='preparing'||diag.attempt.error)return;clearTimeout(readyTimer);diag.attempt.readyAt=new Date().toISOString();diag.attempt.readyDelayMs=Math.round(performance.now()-diag.attempt.started);showRecordingUI('recording');status('● 可以開始讀 / Recording（讀完按 STOP）');logDiag('audio-ready');}
+function newAttempt(){diag.attempt={lesson:currentLesson,page:pageIdx+1,target:words.join(' '),started:performance.now(),clickedAt:new Date().toISOString(),engine:useWebSpeech?'Web Speech en-GB':'Whisper',transcript:null};activeEngine='';showRecordingUI('preparing');lessonSelectEl.disabled=true;status('準備收音中，請等「可以開始讀」先讀');logDiag('start-click');readyTimer=setTimeout(()=>{if(uiMode==='preparing'){if(webRec)try{webRec.abort();}catch(e){}failure('ready-timeout','等候咪高峰超過 20 秒；請檢查權限提示，再重試');}},20000);}
+const originalButtons=updateButtons; updateButtons=function(){originalButtons();lessonSelectEl.disabled=uiMode!=='idle';};
+const originalUI=showRecordingUI;
+showRecordingUI=function(mode){originalUI(mode);lessonSelectEl.disabled=mode!=='idle';};
+const micErrors={NotAllowedError:'咪高峰權限被拒絕，或網頁／系統限制；請檢查網站及系統咪高峰權限',NotFoundError:'搵唔到咪高峰，請接駁咪高峰',NotReadableError:'無法開啟咪高峰；可能被其他程式佔用或系統裝置有問題',SecurityError:'瀏覽器安全設定禁止收音'};
+startWhisperRecording=async function(){
+ let stream;
+ try{
+  activeEngine='whisper';diag.attempt.engine='Whisper';
+  if(!window.isSecureContext)throw new Error('需要 HTTPS 或 localhost 先可以錄音');
+  if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('瀏覽器不支援此錄音功能；請用新版 Safari / Chrome 開啟');
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  if(uiMode!=='preparing'){stream.getTracks().forEach(t=>t.stop());return;}
+  activeStream=stream;const track=stream.getAudioTracks()[0];diag.attempt.mic={label:track.label,state:track.readyState,muted:track.muted,settings:track.getSettings?Object.fromEntries(Object.entries(track.getSettings()).filter(([k])=>!['deviceId','groupId'].includes(k))):{}};
+  track.onmute=()=>logDiag('mic-muted');track.onunmute=()=>logDiag('mic-unmuted');track.onended=()=>{if(uiMode==='recording'){stopRecording();failure('mic-ended','咪高峰連線中斷，請重新錄音');}};
+  const mime=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t));
+  const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);mediaRecorder=recorder;const chunks=[];diag.attempt.mime=recorder.mimeType;
+  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  recorder.onstart=()=>{monitorMic(stream);markReady();};
+  recorder.onerror=e=>{failure('recorder-error',e.error?.message||'錄音器錯誤');releaseMic();};
+  recorder.onstop=async()=>{releaseMic();if(diag.attempt.error)return;const blob=new Blob(chunks,{type:recorder.mimeType||chunks[0]?.type||''});diag.attempt.bytes=blob.size;diag.attempt.durationMs=Date.now()-Date.parse(diag.attempt.readyAt);if(playbackURL)URL.revokeObjectURL(playbackURL);playbackURL=URL.createObjectURL(blob);const player=document.getElementById('diagPlayback');player.src=playbackURL;player.hidden=false;logDiag('recording-stopped',{bytes:blob.size,mime:blob.type});if(!blob.size){failure('empty-audio','錄音檔係空白，未作判分，請重試');return;}await sendToWhisper(blob);};
+  recorder.start();
+ }catch(e){if(stream)stream.getTracks().forEach(t=>t.stop());releaseMic();failure(e.name,micErrors[e.name]||e.message);}
+};
+startBtn.onclick=async()=>{
+ if(startBtn.disabled)return;
+ if(isRunning){diag.attempt.stopAt=new Date().toISOString();showRecordingUI('analyzing');status('分析中，請稍等');if(activeEngine==='web'){finishTimer=setTimeout(()=>{try{webRec.abort();}catch(e){}failure('recognition-timeout','辨識服務未回應，未作判分，請重試');},15000);stopWebSpeech();}else stopRecording();return;}
+ if(currentAudio)currentAudio.pause();if(window.speechSynthesis)speechSynthesis.cancel();document.getElementById('diagPlayback').pause();
+ newAttempt();
+ if(!useWebSpeech){await startWhisperRecording();return;}
+ activeEngine='web';webTranscript='';const rec=new WebSR();webRec=rec;rec.lang='en-GB';rec.continuous=true;rec.interimResults=true;let finalText='',failed=false;
+ rec.onaudiostart=()=>{if(!failed&&uiMode==='preparing')markReady();};
+ rec.onsoundstart=()=>logDiag('sound-detected');rec.onspeechstart=()=>logDiag('speech-detected');
+ rec.onresult=e=>{finalText='';let interim='';for(let i=0;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)finalText+=' '+r[0].transcript;else interim+=' '+r[0].transcript;}webTranscript=finalText;diag.attempt.interim=interim;diag.attempt.final=finalText;refreshDiag();};
+ rec.onerror=e=>{failed=true;failure(e.error,({'not-allowed':'咪高峰／辨識權限被拒絕','audio-capture':'瀏覽器無法收音，請檢查咪高峰','network':'語音辨識服務連線失敗','no-speech':'未辨識到說話；可能未收到聲或聲音太細，未作判分'})[e.error]||('辨識錯誤：'+e.error));};
+ rec.onend=async()=>{clearTimeout(readyTimer);clearTimeout(finishTimer);if(failed||diag.attempt.error)return;logDiag('recognition-ended');showRecordingUI('analyzing');await applyTranscript(finalText.trim());};
+ try{rec.start();}catch(e){logDiag('web-start-fallback',e.message);activeEngine='whisper';await startWhisperRecording();}
+};
+sendToWhisper=async function(blob){
+ showRecordingUI('analyzing');status('正在上傳及辨識錄音');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000),start=performance.now();
+ try{const form=new FormData(),ext=blob.type.includes('mp4')?'m4a':blob.type.includes('ogg')?'ogg':'webm';form.append('file',blob,'audio.'+ext);form.append('model','gpt-4o-mini-transcribe');const res=await fetch(WHISPER_API_URL,{method:'POST',body:form,signal:controller.signal});diag.attempt.http=res.status;diag.attempt.serverMs=Math.round(performance.now()-start);if(!res.ok)throw new Error('伺服器 HTTP '+res.status+'：'+(await res.text()).slice(0,400));const data=await res.json();if(typeof data.text!=='string')throw new Error('伺服器回傳缺少辨識文字');await applyTranscript(data.text);}catch(e){failure(e.name,e.name==='AbortError'?'上傳／辨識超過 45 秒，未作判分；請檢查網絡再重試':e.message);}finally{clearTimeout(timer);}
+};
+const originalApply=applyTranscript;
+applyTranscript=async function(raw){
+ diag.attempt.transcript=raw;diag.attempt.note='辨識文字不等於真實發音；未配對可能係漏讀、讀音或辨識問題。原有判分按出現過嘅字配對，未檢查次序及重複次數。';
+ if(!raw.trim()){failure('no-transcript','冇辨識到文字，未作判分；請檢查收音／重試');return;}
+ const heard=raw.toLowerCase().match(/[a-z]+(?:'[a-z]+)*/g)||[];
+ const target=words.map(w=>w.toLowerCase());const match=(a,b)=>(wordVariants[a]||[a]).some(v=>v.toLowerCase()===b);
+ const dp=Array.from({length:target.length+1},()=>Array(heard.length+1).fill(0));for(let i=0;i<=target.length;i++)dp[i][0]=i;for(let j=0;j<=heard.length;j++)dp[0][j]=j;
+ for(let i=1;i<=target.length;i++)for(let j=1;j<=heard.length;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(match(target[i-1],heard[j-1])?0:1));
+ const rows=[];let i=target.length,j=heard.length;while(i||j){if(i&&j&&dp[i][j]===dp[i-1][j-1]+(match(target[i-1],heard[j-1])?0:1)){rows.unshift({目標:words[i-1],辨識:heard[j-1],結果:match(target[i-1],heard[j-1])?'配對':'未配對（估計對位）'});i--;j--;}else if(i&&dp[i][j]===dp[i-1][j]+1){rows.unshift({目標:words[i-1],辨識:'未辨識到',結果:'缺少'});i--;}else{rows.unshift({目標:'—',辨識:heard[j-1],結果:'額外辨識'});j--;}}
+ diag.attempt.wordComparison=rows;await originalApply(raw);status('辨識完成；打開診斷可睇原文及逐字對照');logDiag('transcript',raw);
+};
+status('按 START，等「可以開始讀」先讀');logDiag('page-loaded');
 
 /* ---------- 初始化 ---------- */
 resetLessonState(pages);
